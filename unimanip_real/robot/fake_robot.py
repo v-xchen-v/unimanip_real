@@ -70,7 +70,7 @@ class FakeRobotSDK(BaseRobotSDK):
         self.is_connected = False
         print("[FakeRobot] Disconnected")
 
-    def reset(self) -> bool:
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
         """Reset robot to home position."""
         print("[FakeRobot] Resetting to home position...")
         
@@ -167,20 +167,21 @@ class FakeRobotSDK(BaseRobotSDK):
 
     # ------------ observation ------------
 
-    def get_raw_observation(self) -> Dict[str, Any]:
-        """Get the current observation from the robot (BaseRobot interface)."""
-        raw_obs = self.get_raw_observation()
-        # Convert RawObservation to dict for BaseRobot compatibility
-        return {
-            'head_top_rgb': raw_obs.head_top_rgb,
-            'right_wrist_rgb': raw_obs.right_wrist_rgb,
-            'head_top_depth': raw_obs.head_top_depth,
-            'right_wrist_depth': raw_obs.right_wrist_depth,
-            'right_arm_q': raw_obs.right_arm_q,
-            'body_q': raw_obs.body_q,
-            'right_arm_joint_names': raw_obs.right_arm_joint_names,
-            'body_joint_names': raw_obs.body_joint_names,
-        }
+    # def get_raw_observation(self) -> RawObservation:
+    #     """Get the current observation from the robot (BaseRobot interface)."""
+    #     raw_obs = self.get_raw_observation()
+    #     # Convert RawObservation to dict for BaseRobot compatibility
+    #     # return {
+    #     #     'head_top_rgb': raw_obs.head_top_rgb,
+    #     #     'right_wrist_rgb': raw_obs.right_wrist_rgb,
+    #     #     'head_top_depth': raw_obs.head_top_depth,
+    #     #     'right_wrist_depth': raw_obs.right_wrist_depth,
+    #     #     'right_arm_q': raw_obs.right_arm_q,
+    #     #     'body_q': raw_obs.body_q,
+    #     #     'right_arm_joint_names': raw_obs.right_arm_joint_names,
+    #     #     'body_joint_names': raw_obs.body_joint_names,
+    #     # }
+    #     return raw_obs
 
     def get_raw_observation(self) -> RawObservation:
         """Generate a synthetic observation."""
@@ -228,6 +229,9 @@ class FakeRobotSDK(BaseRobotSDK):
     def move_joints(self, joint_cfg: Dict[str, float]) -> None:
         """Move the robot joints to the specified positions (BaseRobot interface)."""
         # Assume joint_positions is the full concatenated array
+        if joint_cfg is None:
+            # fake a joint_cfg for testing
+            joint_cfg = {f"joint_{i}": 0.0 for i in range(0, 9)}
         joint_positions = list(joint_cfg.values())
         self.move_full_concatenated_joints(joint_positions, duration=1.0)
 

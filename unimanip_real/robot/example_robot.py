@@ -1,6 +1,7 @@
 from robot_kinematics.urdf.inspector import FullURDFInspector
 from .base_robot import BaseRobotSDK
 from typing import Dict, Any
+from ..core.types import RawObservation 
 
 class ExampleRobotSDK(BaseRobotSDK):
     """
@@ -53,7 +54,7 @@ class ExampleRobotSDK(BaseRobotSDK):
         
         print("[ExampleRobotSDK] Robot reset complete.")
         
-    def get_raw_observation(self) -> Dict[str, Any]:
+    def get_raw_observation(self) -> RawObservation:
         print("[ExampleRobotSDK] Getting observation from Example Robot SDK...")
         # Simulate observation retrieval delay
         import time
