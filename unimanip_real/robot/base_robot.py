@@ -25,7 +25,7 @@ class BaseRobotSDK(ABC):
         pass
     
     @abstractmethod
-    def get_observation(self) -> Dict[str, Any]:
+    def get_raw_observation(self) -> Dict[str, Any]:
         """Get the current observation from the robot."""
         pass
     

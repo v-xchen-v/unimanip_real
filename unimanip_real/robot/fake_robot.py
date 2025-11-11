@@ -167,7 +167,7 @@ class FakeRobotSDK(BaseRobotSDK):
 
     # ------------ observation ------------
 
-    def get_observation(self) -> Dict[str, Any]:
+    def get_raw_observation(self) -> Dict[str, Any]:
         """Get the current observation from the robot (BaseRobot interface)."""
         raw_obs = self.get_raw_observation()
         # Convert RawObservation to dict for BaseRobot compatibility

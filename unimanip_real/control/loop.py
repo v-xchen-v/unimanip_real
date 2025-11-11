@@ -5,11 +5,12 @@ from ..model.vla_client import APICClient
 from .observation import build_model_input
 from .action_postproc import action_to_joint_targets
 from ..constrants import get_reset_joint_cfg
+from ..robot.base_robot import BaseRobotSDK
 
 class InferenceLoop:
     def __init__(
         self,
-        robot: SDKRobot,
+        robot: BaseRobotSDK,
         model_client: APICClient,
         config: Dict[str, Any],
         task_name: str = "open_laptop",
@@ -36,12 +37,12 @@ class InferenceLoop:
         # 4) convert to joint targets
         q_target = action_to_joint_targets(
             action=action,
-            current_q=obs.right_arm_q.tolist() + obs.body_q.tolist(),
+            current_q={},
             config=self.config,
         )
 
         # 5) send to robot
-        self.robot.move_full_concatenated_joints(q_target)
+        self.robot.move_joints(q_target)
 
         if step_idx % self.log_every == 0:
             print(f"[Loop] step {step_idx} done.")

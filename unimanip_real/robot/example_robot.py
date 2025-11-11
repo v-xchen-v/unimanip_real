@@ -53,16 +53,16 @@ class ExampleRobotSDK(BaseRobotSDK):
         
         print("[ExampleRobotSDK] Robot reset complete.")
         
-    def get_observation(self) -> Dict[str, Any]:
+    def get_raw_observation(self) -> Dict[str, Any]:
         print("[ExampleRobotSDK] Getting observation from Example Robot SDK...")
         # Simulate observation retrieval delay
         import time
         time.sleep(0.5)
         
         observation = {
-            "joint_positions": [0.0] * self.urdf_inspector.n_dofs,
-            "joint_velocities": [0.0] * self.urdf_inspector.n_dofs,
-            "end_effector_pose": self.urdf_inspector.fk([0.0] * self.urdf_inspector.n_dofs)
+            # "joint_positions": [0.0] * self.urdf_inspector.n_dofs,
+            # "joint_velocities": [0.0] * self.urdf_inspector.n_dofs,
+            # "end_effector_pose": self.urdf_inspector.fk([0.0] * self.urdf_inspector.n_dofs)
         }
         
         print("[ExampleRobotSDK] Observation retrieved:", observation)
