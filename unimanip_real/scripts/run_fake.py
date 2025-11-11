@@ -27,10 +27,12 @@ def fake_model_client():
 def main():
     # Load configuration
     config_path = Path(__file__).parent.parent / "configs" / "fake_robot_config.yaml"
-    cfg = load_config(config_path)
+    robot_cfg = load_config(config_path)
+    task_config_path = Path(__file__).parent.parent / "configs" / "task_config.yaml"
+    task_cfg = load_config(task_config_path)
 
     # Initialize fake robot
-    fake_robot = FakeRobot(cfg)
+    fake_robot = FakeRobot(robot_cfg, task_cfg)
 
     # fake model client
     model_client = fake_model_client()
@@ -39,7 +41,7 @@ def main():
     control_loop = InferenceLoop(
         robot=fake_robot,
         model_client=model_client,
-        config=cfg,
+        config=robot_cfg,
     )
 
     # Run interactive control loop

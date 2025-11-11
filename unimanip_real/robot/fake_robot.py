@@ -6,6 +6,7 @@ import numpy as np
 import time
 
 from ..core.types import RawObservation
+from ..configs.config_loader import load_reset_joints_config
 
 
 class FakeRobot:
@@ -15,9 +16,12 @@ class FakeRobot:
     without requiring actual hardware.
     """
 
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
-        robot_cfg = config.get("robot", {})
+    def __init__(self, robot_config: Dict[str, Any], task_config: Dict[str, Any] = None) -> None:
+        self.config = robot_config
+        robot_cfg = robot_config.get("robot", {})
+        
+        # reset joints, ... in task config
+        self.task_config = task_config if task_config is not None else {}
         
         # Robot configuration
         self.num_joints = robot_cfg.get("num_joints", 14)
@@ -70,6 +74,14 @@ class FakeRobot:
     def reset(self) -> bool:
         """Reset robot to home position."""
         print("[FakeRobot] Resetting to home position...")
+        # read reset_joints from task_config
+        if not "reset_joints" in self.task_config:
+            print("[FakeRobot] No reset_joints found in task_config")
+            raise ValueError("reset_joints not found in task_config")
+        
+        reset_joints_cfg = self.task_config["reset_joints"]
+        print(f"[FakeRobot] Reset joints config: {reset_joints_cfg}")
+            
         self.current_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
         self.target_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
         self.current_ee_pose = np.array([0.5, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0], dtype=np.float32)
