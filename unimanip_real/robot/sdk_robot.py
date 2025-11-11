@@ -21,6 +21,7 @@ class SDKRobot:
         
         # reset joints, ... in task config
         self.task_config = task_config if task_config is not None else {}
+        self.reset_joints_cfg = self.task_config.get("reset_joints", {})
         
         sdk_type = robot_cfg.get("sdk_type", "example")
         sdk_config = {
@@ -38,6 +39,11 @@ class SDKRobot:
         self.body_indices: List[int] = jm["body_indices"]
         self.right_arm_joint_names: List[str] = jm["right_arm_joint_names"]
         self.body_joint_names: List[str] = jm["body_joint_names"]
+        self.left_joint_names: List[str] = jm.get("left_joint_names", [])
+        self.head_joint_names: List[str] = jm.get("head_joint_names", [])
+        self.wholebody_joint_names: List[str] = (
+            self.body_joint_names + self.right_arm_joint_names + self.left_joint_names + self.head_joint_names
+        )
 
         sensors = robot_cfg.get("sensors", {})
         self.head_depth_available = sensors.get("head_depth_available", False)
@@ -66,20 +72,10 @@ class SDKRobot:
         
         reset_joints_cfg = self.task_config["reset_joints"]
         print(f"[SDKRobot] Reset joints config: {reset_joints_cfg}")
-        
-        state = self.sdk.get_current_state()
-        full = state.joint_angles.copy()
-        for joint_name, angle in reset_joints_cfg.items():
-            if joint_name in self.body_joint_names:
-                idx = self.body_joint_names.index(joint_name)
-                full[self.body_indices[idx]] = angle
-            elif joint_name in self.right_arm_joint_names:
-                idx = self.right_arm_joint_names.index(joint_name)
-                full[self.right_arm_indices[idx]] = angle
-            else:
-                print(f"[SDKRobot] Warning: joint name {joint_name} not found in body or right arm joints.")
+    
                 
-        return self.sdk.move_to_joint_angles(full, duration=2.0)
+        # return self.sdk.move_to_joint_angles(full, duration=2.0)
+        return self.sdk.reset(reset_joints_cfg)
 
     # ------------ core helpers ------------
 

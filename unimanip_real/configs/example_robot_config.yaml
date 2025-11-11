@@ -1,0 +1,58 @@
+robot:
+  sdk_type: "example"          # or "example", "dry_run", etc., used by create_robot_sdk
+  num_joints: 14           # matches RobotSDKWrapper
+  urdf_path: "/home/xichen/Documents/repos/unimanip_real/assets/g1/G1_120s/urdf/G1_120s.urdf"
+
+  # # Indices into RobotState.joint_angles for right arm & body
+  # whole_body_joint_mapping: # for whole body reset
+  #   right_arm_indices: [7, 8, 9, 10, 11, 12, 13]   # example: right arm is last 7 joints
+  #   left_arm_indices: [0, 1, 2, 3, 4, 5, 6]
+  #   body_indices: [0, 1]
+  #   head_indices: [0, 1]             # example: use first 2 as "head" joints
+
+  #   right_arm_joint_names:
+  #     - idx61_arm_r_joint1
+  #     - idx62_arm_r_joint2
+  #     - idx63_arm_r_joint3
+  #     - idx64_arm_r_joint4
+  #     - idx65_arm_r_joint5
+  #     - idx66_arm_r_joint6
+  #     - idx67_arm_r_joint7
+
+  #   body_joint_names:
+  #     - idx01_body_joint1
+  #     - idx02_body_joint2
+
+  #   left_joint_names:
+  #     - idx21_arm_l_joint1
+  #     - idx22_arm_l_joint2
+  #     - idx23_arm_l_joint3
+  #     - idx24_arm_l_joint4
+  #     - idx25_arm_l_joint5
+  #     - idx26_arm_l_joint6
+  #     - idx27_arm_l_joint7
+
+  #   head_joint_names:
+  #     - idx11_head_joint1
+  #     - idx12_head_joint2
+
+  joint_mapping: # move right only in open laptop
+    right_arm_indices: [7, 8, 9, 10, 11, 12, 13]   # example: right wrist is last 4 joints
+    body_indices: [0, 1] 
+    
+    right_arm_joint_names:
+      - idx61_arm_r_joint1
+      - idx62_arm_r_joint2
+      - idx63_arm_r_joint3
+      - idx64_arm_r_joint4
+      - idx65_arm_r_joint5
+      - idx66_arm_r_joint6
+      - idx67_arm_r_joint7
+
+    body_joint_names:
+      - idx01_body_joint1
+      - idx02_body_joint2
+
+  sensors:
+    head_depth_available: true
+    right_wrist_depth_available: false   # we’ll return all-zero image for this

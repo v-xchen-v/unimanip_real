@@ -1,5 +1,6 @@
 # Reset configuration for robot joints
 # Defines the default joint positions for resetting the robot to a neutral pose
+task_name: "open_laptop"
 
 reset_joints:
   # Body

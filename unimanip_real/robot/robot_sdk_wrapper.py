@@ -31,11 +31,11 @@ class RobotState:
     timestamp: float
 
 
-@dataclass
-class CameraCalibration:
-    """Camera calibration parameters."""
-    intrinsic: np.ndarray         # (3, 3) intrinsic matrix
-    camera_in_head: np.ndarray    # (4, 4) transformation matrix
+# @dataclass
+# class CameraCalibration:
+#     """Camera calibration parameters."""
+#     intrinsic: np.ndarray         # (3, 3) intrinsic matrix
+#     camera_in_head: np.ndarray    # (4, 4) transformation matrix
 
 
 class RobotSDKWrapper:
@@ -96,7 +96,22 @@ class RobotSDKWrapper:
         print(f"Moving to joint angles: {joint_angles[:3]}... over {duration}s")
         time.sleep(duration)  # Simulate movement time
         return True
-    
+
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
+        """
+        Reset specified joints to given angles.
+        
+        Args:
+            reset_joint_cfg: Dictionary mapping joint names to target angles
+            
+        Returns:
+            True if reset successful
+        """
+        # TODO: Implement actual robot reset
+        print(f"Resetting joints: {reset_joint_cfg}")
+        time.sleep(1.0)  # Simulate reset time
+        return True
+
     def move_head(self, pan: float, tilt: float, duration: float = 1.0) -> bool:
         """
         Move robot head to specified angles.
@@ -153,29 +168,29 @@ class RobotSDKWrapper:
         
         return image
     
-    def get_camera_calibration(self) -> CameraCalibration:
-        """
-        Get camera calibration parameters.
+    # def get_camera_calibration(self) -> CameraCalibration:
+    #     """
+    #     Get camera calibration parameters.
         
-        Returns:
-            Camera calibration data
-        """
-        # TODO: Implement actual calibration retrieval
-        # Return typical camera parameters
-        intrinsic = np.array([
-            [525.0, 0.0, 320.0],
-            [0.0, 525.0, 240.0],
-            [0.0, 0.0, 1.0]
-        ], dtype=np.float32)
+    #     Returns:
+    #         Camera calibration data
+    #     """
+    #     # TODO: Implement actual calibration retrieval
+    #     # Return typical camera parameters
+    #     intrinsic = np.array([
+    #         [525.0, 0.0, 320.0],
+    #         [0.0, 525.0, 240.0],
+    #         [0.0, 0.0, 1.0]
+    #     ], dtype=np.float32)
         
-        # Camera positioned 10cm forward and 5cm up from head center
-        camera_in_head = np.eye(4, dtype=np.float32)
-        camera_in_head[:3, 3] = [0.1, 0.0, 0.05]
+    #     # Camera positioned 10cm forward and 5cm up from head center
+    #     camera_in_head = np.eye(4, dtype=np.float32)
+    #     camera_in_head[:3, 3] = [0.1, 0.0, 0.05]
         
-        return CameraCalibration(
-            intrinsic=intrinsic,
-            camera_in_head=camera_in_head
-        )
+    #     return CameraCalibration(
+    #         intrinsic=intrinsic,
+    #         camera_in_head=camera_in_head
+    #     )
     
     def is_motion_complete(self) -> bool:
         """
@@ -444,27 +459,27 @@ class DryRunRobotSDK(RobotSDKWrapper):
         self.image_counter += 1
         return image
     
-    def get_camera_calibration(self) -> CameraCalibration:
-        """Return simulated camera calibration."""
-        # Realistic camera parameters for the simulated camera
-        focal_length = 525.0
-        cx = self.image_width / 2.0
-        cy = self.image_height / 2.0
+    # def get_camera_calibration(self) -> CameraCalibration:
+    #     """Return simulated camera calibration."""
+    #     # Realistic camera parameters for the simulated camera
+    #     focal_length = 525.0
+    #     cx = self.image_width / 2.0
+    #     cy = self.image_height / 2.0
         
-        intrinsic = np.array([
-            [focal_length, 0.0, cx],
-            [0.0, focal_length, cy],
-            [0.0, 0.0, 1.0]
-        ], dtype=np.float32)
+    #     intrinsic = np.array([
+    #         [focal_length, 0.0, cx],
+    #         [0.0, focal_length, cy],
+    #         [0.0, 0.0, 1.0]
+    #     ], dtype=np.float32)
         
-        # Camera positioned relative to head
-        camera_in_head = np.eye(4, dtype=np.float32)
-        camera_in_head[:3, 3] = [0.08, 0.0, 0.03]  # 8cm forward, 3cm up
+    #     # Camera positioned relative to head
+    #     camera_in_head = np.eye(4, dtype=np.float32)
+    #     camera_in_head[:3, 3] = [0.08, 0.0, 0.03]  # 8cm forward, 3cm up
         
-        return CameraCalibration(
-            intrinsic=intrinsic,
-            camera_in_head=camera_in_head
-        )
+    #     return CameraCalibration(
+    #         intrinsic=intrinsic,
+    #         camera_in_head=camera_in_head
+    #     )
     
     def is_motion_complete(self) -> bool:
         """Check if simulated motion is complete."""
@@ -492,6 +507,56 @@ class DryRunRobotSDK(RobotSDKWrapper):
         print("Simulating EMERGENCY STOP!")
         self.is_moving = False
         return True
+
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
+        """
+        Reset specified joints to given angles in dry run mode.
+        
+        Args:
+            reset_joint_cfg: Dictionary mapping joint names to target angles
+            
+        Returns:
+            True if reset successful
+        """
+        print(f"[DRY RUN] Resetting joints: {reset_joint_cfg}")
+        
+        try:
+            # Convert joint config to joint angle array
+            reset_angles = self.current_joint_angles.copy()
+            
+            # Update specified joints
+            for joint_name, angle in reset_joint_cfg.items():
+                if joint_name.startswith('joint_') or joint_name.startswith('arm_'):
+                    # Extract joint index from name (e.g., "joint_0" -> 0)
+                    try:
+                        if joint_name.startswith('joint_'):
+                            joint_idx = int(joint_name.split('_')[1])
+                        elif joint_name.startswith('arm_'):
+                            joint_idx = int(joint_name.split('_')[1])
+                        else:
+                            continue
+                            
+                        if 0 <= joint_idx < self.num_joints:
+                            reset_angles[joint_idx] = float(angle)
+                            print(f"[DRY RUN] Setting {joint_name} (index {joint_idx}) to {angle:.3f} rad")
+                    except (ValueError, IndexError) as e:
+                        print(f"[DRY RUN] Warning: Invalid joint name '{joint_name}': {e}")
+                        continue
+            
+            # Perform the reset movement
+            success = self.move_to_joint_angles(reset_angles, duration=2.0)
+            
+            if success:
+                print(f"[DRY RUN] Joint reset completed successfully")
+            else:
+                print(f"[DRY RUN] Joint reset failed")
+                
+            return success
+            
+        except Exception as e:
+            print(f"[DRY RUN] Reset failed: {e}")
+            return False
+    
 
 
 class A2DRobotSDK(RobotSDKWrapper):
@@ -727,6 +792,77 @@ class A2DRobotSDK(RobotSDKWrapper):
             'max': np.array([2.5] * 14, dtype=np.float32)    # +2.5 rad for all joints
         }
 
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
+        """
+        Reset specified joints to given angles using A2D SDK.
+        
+        Args:
+            reset_joint_cfg: Dictionary mapping joint names to target angles
+            
+        Returns:
+            True if reset successful
+        """
+        if self.robot_api is None:
+            print("Robot API not available")
+            return False
+            
+        try:
+            print(f"[A2D] Resetting joints: {reset_joint_cfg}")
+            
+            # Get current state to preserve non-reset joints
+            current_state = self.get_current_state()
+            reset_angles = current_state.joint_angles.copy()
+            
+            # Update specified joints
+            for joint_name, angle in reset_joint_cfg.items():
+                if joint_name.startswith('joint_') or joint_name.startswith('arm_'):
+                    try:
+                        # Extract joint index from name (e.g., "joint_0" -> 0, "arm_left_0" -> 0, etc.)
+                        if joint_name.startswith('joint_'):
+                            joint_idx = int(joint_name.split('_')[1])
+                        elif joint_name.startswith('arm_left_'):
+                            joint_idx = int(joint_name.split('_')[2])  # Left arm: indices 0-6
+                        elif joint_name.startswith('arm_right_'):
+                            joint_idx = int(joint_name.split('_')[2]) + 7  # Right arm: indices 7-13
+                        elif joint_name.startswith('arm_'):
+                            joint_idx = int(joint_name.split('_')[1])
+                        else:
+                            continue
+                            
+                        if 0 <= joint_idx < self.num_joints:
+                            reset_angles[joint_idx] = float(angle)
+                            print(f"[A2D] Setting {joint_name} (index {joint_idx}) to {angle:.3f} rad")
+                        else:
+                            print(f"[A2D] Warning: Joint index {joint_idx} out of range [0, {self.num_joints-1}]")
+                    except (ValueError, IndexError) as e:
+                        print(f"[A2D] Warning: Invalid joint name '{joint_name}': {e}")
+                        continue
+            
+            # Validate joint angles
+            if not self.validate_joint_angles(reset_angles):
+                print("[A2D] Reset angles out of range!")
+                return False
+            
+            # Use the A2D reset API
+            arm_positions = reset_angles.tolist()
+            self.robot_api.reset(
+                arm_positions=arm_positions,
+                gripper_positions=[0.0, 0.0],  # Keep grippers closed
+                hand_positions=None,  # Will use current hand position
+                waist_positions=None,  # Will use current waist position
+                head_positions=None   # Will use current head position
+            )
+            
+            # Wait for reset to complete
+            time.sleep(2.0)
+            print(f"[A2D] Joint reset completed successfully")
+            return True
+            
+        except Exception as e:
+            print(f"[A2D] Reset failed: {e}")
+            return False
+    
+
 
 # Enhanced ExampleRobotSDK with better simulation features
 class ExampleRobotSDK(RobotSDKWrapper):
@@ -737,9 +873,12 @@ class ExampleRobotSDK(RobotSDKWrapper):
     without requiring the actual hardware or SDK.
     """
     
-    def __init__(self, robot_config: Dict[str, Any]):
+    def __init__(self, robot_config: Dict[str, Any], task_config: Dict[str, Any] = None):
         super().__init__(robot_config)
         
+        self.task_config = task_config
+        self.reset_joint_cfg = robot_config.get('reset_joints', np.zeros(self.num_joints))
+
         # Simulate robot state
         self._current_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
         self._current_head_angles = np.zeros(2, dtype=np.float32)  # pan, tilt
@@ -922,7 +1061,7 @@ class ExampleRobotSDK(RobotSDKWrapper):
         except Exception as e:
             print(f"[SIM] Homing failed: {e}")
             return False
-    
+        
     def get_joint_limits(self) -> Dict[str, np.ndarray]:
         """Get realistic joint limits."""
         # More realistic joint limits for a humanoid robot
@@ -941,6 +1080,70 @@ class ExampleRobotSDK(RobotSDKWrapper):
             'min': min_limits,
             'max': max_limits
         }
+
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
+        """
+        Reset specified joints to given angles in enhanced simulation mode.
+        
+        Args:
+            reset_joint_cfg: Dictionary mapping joint names to target angles
+            
+        Returns:
+            True if reset successful
+        """
+        try:
+            print(f"[EXAMPLE] Resetting joints: {reset_joint_cfg}")
+            
+            # Get current joint angles
+            reset_angles = self._current_joint_angles.copy()
+            
+            # Update specified joints
+            for joint_name, angle in reset_joint_cfg.items():
+                if joint_name.startswith('joint_') or joint_name.startswith('arm_'):
+                    try:
+                        # Extract joint index from name
+                        if joint_name.startswith('joint_'):
+                            joint_idx = int(joint_name.split('_')[1])
+                        elif joint_name.startswith('arm_left_'):
+                            joint_idx = int(joint_name.split('_')[2])  # Left arm: indices 0-6
+                        elif joint_name.startswith('arm_right_'):
+                            joint_idx = int(joint_name.split('_')[2]) + 7  # Right arm: indices 7-13
+                        elif joint_name.startswith('arm_'):
+                            joint_idx = int(joint_name.split('_')[1])
+                        else:
+                            continue
+                            
+                        if 0 <= joint_idx < self.num_joints:
+                            reset_angles[joint_idx] = float(angle)
+                            print(f"[EXAMPLE] Setting {joint_name} (index {joint_idx}) to {angle:.3f} rad")
+                        else:
+                            print(f"[EXAMPLE] Warning: Joint index {joint_idx} out of range [0, {self.num_joints-1}]")
+                    except (ValueError, IndexError) as e:
+                        print(f"[EXAMPLE] Warning: Invalid joint name '{joint_name}': {e}")
+                        continue
+            
+            # Validate joint angles
+            if not self.validate_joint_angles(reset_angles):
+                print("[EXAMPLE] Reset angles out of range!")
+                # Clamp to valid range for simulation
+                limits = self.get_joint_limits()
+                reset_angles = np.clip(reset_angles, limits['min'], limits['max'])
+                print("[EXAMPLE] Clamped angles to valid range for simulation")
+            
+            # Perform the reset movement
+            success = self.move_to_joint_angles(reset_angles, duration=2.0)
+            
+            if success:
+                print(f"[EXAMPLE] Joint reset completed successfully")
+            else:
+                print(f"[EXAMPLE] Joint reset failed")
+                
+            return success
+            
+        except Exception as e:
+            print(f"[EXAMPLE] Reset failed: {e}")
+            return False
+    
 
 
 # Factory function to create robot SDK instances
@@ -993,28 +1196,28 @@ if __name__ == "__main__":
         
     #     if a2d_robot.connect():
     #         print("✓ A2D Robot connected successfully")
-            
+    #         
     #         # Test joint movement
     #         test_angles = np.array([0.1, -0.1, 0.2, -0.2, 0.0, 0.1, -0.1] * 2, dtype=np.float32)  # 14 joints
     #         success = a2d_robot.move_to_joint_angles(test_angles, duration=1.0)
     #         print(f"✓ Joint movement: {'Success' if success else 'Failed'}")
-            
+    #         
     #         # Test head movement
     #         success = a2d_robot.move_head(0.2, 0.1, duration=0.5)
     #         print(f"✓ Head movement: {'Success' if success else 'Failed'}")
-            
+    #         
     #         # Test state reading
     #         state = a2d_robot.get_current_state()
     #         print(f"✓ State reading: {state.joint_angles.shape} joints, head={state.head_angles}")
-            
+    #         
     #         # Test image capture
     #         image = a2d_robot.capture_image()
     #         print(f"✓ Image capture: {image.shape}")
-            
+    #         
     #         # Test homing
     #         success = a2d_robot.home_robot()
     #         print(f"✓ Homing: {'Success' if success else 'Failed'}")
-            
+    #         
     #         a2d_robot.disconnect()
     #     else:
     #         print("✗ Failed to connect to A2D robot")

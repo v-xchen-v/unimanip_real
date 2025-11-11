@@ -5,11 +5,12 @@ from typing import Dict, Any, List
 import numpy as np
 import time
 
+from .base_robot import BaseRobot
 from ..core.types import RawObservation
 from ..configs.config_loader import load_reset_joints_config
 
 
-class FakeRobot:
+class FakeRobot(BaseRobot):
     """
     A fake robot implementation for testing and simulation.
     This robot generates synthetic data and simulates robot movements
@@ -17,7 +18,9 @@ class FakeRobot:
     """
 
     def __init__(self, robot_config: Dict[str, Any], task_config: Dict[str, Any] = None) -> None:
-        self.config = robot_config
+        # Call parent constructor
+        super().__init__(robot_config)
+        
         robot_cfg = robot_config.get("robot", {})
         
         # reset joints, ... in task config
@@ -171,6 +174,21 @@ class FakeRobot:
 
     # ------------ observation ------------
 
+    def get_observation(self) -> Dict[str, Any]:
+        """Get the current observation from the robot (BaseRobot interface)."""
+        raw_obs = self.get_raw_observation()
+        # Convert RawObservation to dict for BaseRobot compatibility
+        return {
+            'head_top_rgb': raw_obs.head_top_rgb,
+            'right_wrist_rgb': raw_obs.right_wrist_rgb,
+            'head_top_depth': raw_obs.head_top_depth,
+            'right_wrist_depth': raw_obs.right_wrist_depth,
+            'right_arm_q': raw_obs.right_arm_q,
+            'body_q': raw_obs.body_q,
+            'right_arm_joint_names': raw_obs.right_arm_joint_names,
+            'body_joint_names': raw_obs.body_joint_names,
+        }
+
     def get_raw_observation(self) -> RawObservation:
         """Generate a synthetic observation."""
         if not self.is_connected:
@@ -213,6 +231,11 @@ class FakeRobot:
         )
 
     # ------------ control ------------
+
+    def move_joints(self, joint_positions: np.ndarray) -> None:
+        """Move the robot joints to the specified positions (BaseRobot interface)."""
+        # Assume joint_positions is the full concatenated array
+        self.move_full_concatenated_joints(joint_positions, duration=1.0)
 
     def move_body_and_right_arm(self, body_q: np.ndarray, right_arm_q: np.ndarray, duration: float = 1.0) -> bool:
         """Simulate movement of body and right arm joints."""
