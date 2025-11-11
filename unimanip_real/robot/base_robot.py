@@ -1,0 +1,35 @@
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+import numpy as np
+
+# TODO: use this contract to fake_robot and sdk_robot
+class BaseRobot(ABC):
+    def __init__(self, config: Dict[str, Any]) -> None:
+        self.config = config
+        
+    @abstractmethod
+    def connect(self) -> None:
+        """Connect to the robot hardware or simulator."""
+        pass
+    
+    @abstractmethod
+    def disconnect(self) -> None:
+        """Disconnect from the robot hardware or simulator."""
+        pass
+    
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset the robot to its initial state."""
+        pass
+    
+    @abstractmethod
+    def get_observation(self) -> Dict[str, Any]:
+        """Get the current observation from the robot."""
+        pass
+    
+    @abstractmethod
+    def move_joints(self, joint_positions: np.ndarray) -> None:
+        """Move the robot joints to the specified positions."""
+        pass
