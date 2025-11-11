@@ -864,285 +864,285 @@ class A2DRobotSDK(RobotSDKWrapper):
     
 
 
-# Enhanced ExampleRobotSDK with better simulation features
-class ExampleRobotSDK(RobotSDKWrapper):
-    """
-    Enhanced example implementation for testing and reference.
+# # Enhanced ExampleRobotSDK with better simulation features
+# class ExampleRobotSDK(RobotSDKWrapper):
+#     """
+#     Enhanced example implementation for testing and reference.
     
-    This provides a more complete simulation that mimics the A2D robot behavior
-    without requiring the actual hardware or SDK.
-    """
+#     This provides a more complete simulation that mimics the A2D robot behavior
+#     without requiring the actual hardware or SDK.
+#     """
     
-    def __init__(self, robot_config: Dict[str, Any], task_config: Dict[str, Any] = None):
-        super().__init__(robot_config)
+#     def __init__(self, robot_config: Dict[str, Any], task_config: Dict[str, Any] = None):
+#         super().__init__(robot_config)
         
-        self.task_config = task_config
-        self.reset_joint_cfg = robot_config.get('reset_joints', np.zeros(self.num_joints))
+#         self.task_config = task_config
+#         self.reset_joint_cfg = robot_config.get('reset_joints', np.zeros(self.num_joints))
 
-        # Simulate robot state
-        self._current_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
-        self._current_head_angles = np.zeros(2, dtype=np.float32)  # pan, tilt
-        self._current_waist_angles = np.array([0.0, 0.27], dtype=np.float32)  # pitch, height(m)
-        self._current_gripper_positions = np.zeros(2, dtype=np.float32)
+#         # Simulate robot state
+#         self._current_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
+#         self._current_head_angles = np.zeros(2, dtype=np.float32)  # pan, tilt
+#         self._current_waist_angles = np.array([0.0, 0.27], dtype=np.float32)  # pitch, height(m)
+#         self._current_gripper_positions = np.zeros(2, dtype=np.float32)
         
-        print("Example robot SDK initialized (enhanced simulation mode)")
+#         print("Example robot SDK initialized (enhanced simulation mode)")
         
-    def connect(self) -> bool:
-        """Connect to example robot."""
-        print("Connected to example robot (enhanced simulation)")
-        self.is_connected = True
-        return True
+#     def connect(self) -> bool:
+#         """Connect to example robot."""
+#         print("Connected to example robot (enhanced simulation)")
+#         self.is_connected = True
+#         return True
     
-    def move_to_joint_angles(self, joint_angles: np.ndarray, duration: float = 1.0) -> bool:
-        """Simulate robot arm movement."""
-        if not self.validate_joint_angles(joint_angles):
-            print("Joint angles out of range!")
-            return False
+#     def move_to_joint_angles(self, joint_angles: np.ndarray, duration: float = 1.0) -> bool:
+#         """Simulate robot arm movement."""
+#         if not self.validate_joint_angles(joint_angles):
+#             print("Joint angles out of range!")
+#             return False
         
-        try:
-            print(f"[SIM] Moving {self.num_joints} joints to target positions: {joint_angles[:3]}...")
+#         try:
+#             print(f"[SIM] Moving {self.num_joints} joints to target positions: {joint_angles[:3]}...")
             
-            # Simulate gradual movement
-            start_angles = self._current_joint_angles.copy()
-            steps = max(10, int(duration * 10))  # 10 steps per second
+#             # Simulate gradual movement
+#             start_angles = self._current_joint_angles.copy()
+#             steps = max(10, int(duration * 10))  # 10 steps per second
             
-            for i in range(steps):
-                # Linear interpolation
-                alpha = (i + 1) / steps
-                self._current_joint_angles = (1 - alpha) * start_angles + alpha * joint_angles
-                time.sleep(duration / steps)
+#             for i in range(steps):
+#                 # Linear interpolation
+#                 alpha = (i + 1) / steps
+#                 self._current_joint_angles = (1 - alpha) * start_angles + alpha * joint_angles
+#                 time.sleep(duration / steps)
             
-            self._current_joint_angles = joint_angles.copy()
-            print(f"[SIM] Joint movement completed")
-            return True
-        except Exception as e:
-            print(f"[SIM] Movement failed: {e}")
-            return False
+#             self._current_joint_angles = joint_angles.copy()
+#             print(f"[SIM] Joint movement completed")
+#             return True
+#         except Exception as e:
+#             print(f"[SIM] Movement failed: {e}")
+#             return False
     
-    def move_head(self, pan: float, tilt: float, duration: float = 1.0) -> bool:
-        """Simulate head movement."""
-        try:
-            print(f"[SIM] Moving head to pan={pan:.3f}, tilt={tilt:.3f}")
+#     def move_head(self, pan: float, tilt: float, duration: float = 1.0) -> bool:
+#         """Simulate head movement."""
+#         try:
+#             print(f"[SIM] Moving head to pan={pan:.3f}, tilt={tilt:.3f}")
             
-            # Simulate gradual movement
-            start_angles = self._current_head_angles.copy()
-            target_angles = np.array([pan, tilt], dtype=np.float32)
-            steps = max(5, int(duration * 10))
+#             # Simulate gradual movement
+#             start_angles = self._current_head_angles.copy()
+#             target_angles = np.array([pan, tilt], dtype=np.float32)
+#             steps = max(5, int(duration * 10))
             
-            for i in range(steps):
-                alpha = (i + 1) / steps
-                self._current_head_angles = (1 - alpha) * start_angles + alpha * target_angles
-                time.sleep(duration / steps)
+#             for i in range(steps):
+#                 alpha = (i + 1) / steps
+#                 self._current_head_angles = (1 - alpha) * start_angles + alpha * target_angles
+#                 time.sleep(duration / steps)
             
-            self._current_head_angles = target_angles
-            print(f"[SIM] Head movement completed")
-            return True
-        except Exception as e:
-            print(f"[SIM] Head movement failed: {e}")
-            return False
+#             self._current_head_angles = target_angles
+#             print(f"[SIM] Head movement completed")
+#             return True
+#         except Exception as e:
+#             print(f"[SIM] Head movement failed: {e}")
+#             return False
     
-    def move_waist(self, waist_angles: np.ndarray, duration: float = 1.0) -> bool:
-        """Simulate waist movement."""
-        try:
-            print(f"[SIM] Moving waist to pitch={waist_angles[0]:.3f}, height={waist_angles[1]:.3f}m")
+#     def move_waist(self, waist_angles: np.ndarray, duration: float = 1.0) -> bool:
+#         """Simulate waist movement."""
+#         try:
+#             print(f"[SIM] Moving waist to pitch={waist_angles[0]:.3f}, height={waist_angles[1]:.3f}m")
             
-            # Validate height range (2cm to 53cm converted to meters)
-            if not (0.02 <= waist_angles[1] <= 0.53):
-                print(f"Waist height {waist_angles[1]:.3f}m out of range [0.02, 0.53]")
-                return False
+#             # Validate height range (2cm to 53cm converted to meters)
+#             if not (0.02 <= waist_angles[1] <= 0.53):
+#                 print(f"Waist height {waist_angles[1]:.3f}m out of range [0.02, 0.53]")
+#                 return False
             
-            start_angles = self._current_waist_angles.copy()
-            steps = max(5, int(duration * 10))
+#             start_angles = self._current_waist_angles.copy()
+#             steps = max(5, int(duration * 10))
             
-            for i in range(steps):
-                alpha = (i + 1) / steps
-                self._current_waist_angles = (1 - alpha) * start_angles + alpha * waist_angles
-                time.sleep(duration / steps)
+#             for i in range(steps):
+#                 alpha = (i + 1) / steps
+#                 self._current_waist_angles = (1 - alpha) * start_angles + alpha * waist_angles
+#                 time.sleep(duration / steps)
             
-            self._current_waist_angles = waist_angles.copy()
-            print(f"[SIM] Waist movement completed")
-            return True
-        except Exception as e:
-            print(f"[SIM] Waist movement failed: {e}")
-            return False
+#             self._current_waist_angles = waist_angles.copy()
+#             print(f"[SIM] Waist movement completed")
+#             return True
+#         except Exception as e:
+#             print(f"[SIM] Waist movement failed: {e}")
+#             return False
     
-    def get_current_state(self) -> RobotState:
-        """Get simulated robot state."""
-        try:
-            current_time = time.time()
+#     def get_current_state(self) -> RobotState:
+#         """Get simulated robot state."""
+#         try:
+#             current_time = time.time()
             
-            # Add small random noise to simulate sensor readings
-            noise_scale = 0.001  # 0.001 radians ≈ 0.06 degrees
+#             # Add small random noise to simulate sensor readings
+#             noise_scale = 0.001  # 0.001 radians ≈ 0.06 degrees
             
-            joint_angles = self._current_joint_angles + np.random.normal(0, noise_scale, self.num_joints)
-            head_angles = self._current_head_angles + np.random.normal(0, noise_scale, 2)
-            waist_angles = self._current_waist_angles + np.random.normal(0, noise_scale, 2)
+#             joint_angles = self._current_joint_angles + np.random.normal(0, noise_scale, self.num_joints)
+#             head_angles = self._current_head_angles + np.random.normal(0, noise_scale, 2)
+#             waist_angles = self._current_waist_angles + np.random.normal(0, noise_scale, 2)
             
-            # Simulate end effector position based on joint angles (very simplified)
-            # In reality, this would require forward kinematics
-            end_position = np.array([
-                0.3 + 0.1 * np.sin(joint_angles[0]),  # X varies with first joint
-                0.2 * np.sin(joint_angles[1]),        # Y varies with second joint  
-                0.5 + 0.1 * np.cos(joint_angles[2])   # Z varies with third joint
-            ], dtype=np.float32)
+#             # Simulate end effector position based on joint angles (very simplified)
+#             # In reality, this would require forward kinematics
+#             end_position = np.array([
+#                 0.3 + 0.1 * np.sin(joint_angles[0]),  # X varies with first joint
+#                 0.2 * np.sin(joint_angles[1]),        # Y varies with second joint  
+#                 0.5 + 0.1 * np.cos(joint_angles[2])   # Z varies with third joint
+#             ], dtype=np.float32)
             
-            # Simple orientation (identity quaternion with small rotation)
-            end_orientation = np.array([1.0, 0.01, 0.01, 0.01], dtype=np.float32)
-            end_orientation = end_orientation / np.linalg.norm(end_orientation)  # Normalize
+#             # Simple orientation (identity quaternion with small rotation)
+#             end_orientation = np.array([1.0, 0.01, 0.01, 0.01], dtype=np.float32)
+#             end_orientation = end_orientation / np.linalg.norm(end_orientation)  # Normalize
             
-            return RobotState(
-                joint_angles=joint_angles.astype(np.float32),
-                head_angles=head_angles.astype(np.float32),
-                end_position=end_position,
-                end_orientation=end_orientation,
-                waist_angles=waist_angles.astype(np.float32),
-                timestamp=current_time
-            )
-        except Exception as e:
-            print(f"[SIM] Failed to get state: {e}")
-            return super().get_current_state()
+#             return RobotState(
+#                 joint_angles=joint_angles.astype(np.float32),
+#                 head_angles=head_angles.astype(np.float32),
+#                 end_position=end_position,
+#                 end_orientation=end_orientation,
+#                 waist_angles=waist_angles.astype(np.float32),
+#                 timestamp=current_time
+#             )
+#         except Exception as e:
+#             print(f"[SIM] Failed to get state: {e}")
+#             return super().get_current_state()
     
-    def capture_image(self) -> np.ndarray:
-        """Generate realistic simulated camera image."""
-        try:
-            # Create more realistic simulation image
-            height, width = 480, 640
+#     def capture_image(self) -> np.ndarray:
+#         """Generate realistic simulated camera image."""
+#         try:
+#             # Create more realistic simulation image
+#             height, width = 480, 640
             
-            # Create a gradient background
-            image = np.zeros((height, width, 3), dtype=np.uint8)
+#             # Create a gradient background
+#             image = np.zeros((height, width, 3), dtype=np.uint8)
             
-            # Add color gradients
-            for y in range(height):
-                for x in range(width):
-                    image[y, x, 0] = int(255 * x / width)  # Red gradient
-                    image[y, x, 1] = int(255 * y / height)  # Green gradient
-                    image[y, x, 2] = int(128 + 127 * np.sin(x * 0.01) * np.sin(y * 0.01))  # Blue pattern
+#             # Add color gradients
+#             for y in range(height):
+#                 for x in range(width):
+#                     image[y, x, 0] = int(255 * x / width)  # Red gradient
+#                     image[y, x, 1] = int(255 * y / height)  # Green gradient
+#                     image[y, x, 2] = int(128 + 127 * np.sin(x * 0.01) * np.sin(y * 0.01))  # Blue pattern
             
-            # Add some geometric shapes to simulate objects
-            cv2.circle(image, (160, 120), 50, (255, 255, 255), 2)
-            cv2.rectangle(image, (300, 200), (400, 300), (0, 255, 255), 2)
-            cv2.line(image, (0, 240), (640, 240), (255, 0, 255), 1)  # Horizon line
+#             # Add some geometric shapes to simulate objects
+#             cv2.circle(image, (160, 120), 50, (255, 255, 255), 2)
+#             cv2.rectangle(image, (300, 200), (400, 300), (0, 255, 255), 2)
+#             cv2.line(image, (0, 240), (640, 240), (255, 0, 255), 1)  # Horizon line
             
-            # Add timestamp and joint angle info
-            timestamp_str = f"t={time.time():.1f}"
-            joint_info = f"J0={self._current_joint_angles[0]:.2f}"
-            head_info = f"H=({self._current_head_angles[0]:.2f},{self._current_head_angles[1]:.2f})"
+#             # Add timestamp and joint angle info
+#             timestamp_str = f"t={time.time():.1f}"
+#             joint_info = f"J0={self._current_joint_angles[0]:.2f}"
+#             head_info = f"H=({self._current_head_angles[0]:.2f},{self._current_head_angles[1]:.2f})"
             
-            cv2.putText(image, timestamp_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-            cv2.putText(image, joint_info, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(image, head_info, (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+#             cv2.putText(image, timestamp_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+#             cv2.putText(image, joint_info, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+#             cv2.putText(image, head_info, (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
-            return image
-        except Exception as e:
-            print(f"[SIM] Failed to capture image: {e}")
-            return super().capture_image()
+#             return image
+#         except Exception as e:
+#             print(f"[SIM] Failed to capture image: {e}")
+#             return super().capture_image()
     
-    def home_robot(self) -> bool:
-        """Move robot to home position."""
-        try:
-            print("[SIM] Moving robot to home position...")
+#     def home_robot(self) -> bool:
+#         """Move robot to home position."""
+#         try:
+#             print("[SIM] Moving robot to home position...")
             
-            home_joint_angles = np.zeros(self.num_joints)
-            home_head_angles = np.array([0.0, 0.0])
-            home_waist_angles = np.array([0.0, 0.27])  # 27cm height
+#             home_joint_angles = np.zeros(self.num_joints)
+#             home_head_angles = np.array([0.0, 0.0])
+#             home_waist_angles = np.array([0.0, 0.27])  # 27cm height
             
-            # Simulate homing sequence
-            success = True
-            success &= self.move_to_joint_angles(home_joint_angles, duration=2.0)
-            success &= self.move_head(home_head_angles[0], home_head_angles[1], duration=1.0)
-            success &= self.move_waist(home_waist_angles, duration=1.5)
+#             # Simulate homing sequence
+#             success = True
+#             success &= self.move_to_joint_angles(home_joint_angles, duration=2.0)
+#             success &= self.move_head(home_head_angles[0], home_head_angles[1], duration=1.0)
+#             success &= self.move_waist(home_waist_angles, duration=1.5)
             
-            if success:
-                print("[SIM] Robot homed successfully")
-            else:
-                print("[SIM] Homing failed")
+#             if success:
+#                 print("[SIM] Robot homed successfully")
+#             else:
+#                 print("[SIM] Homing failed")
             
-            return success
-        except Exception as e:
-            print(f"[SIM] Homing failed: {e}")
-            return False
+#             return success
+#         except Exception as e:
+#             print(f"[SIM] Homing failed: {e}")
+#             return False
         
-    def get_joint_limits(self) -> Dict[str, np.ndarray]:
-        """Get realistic joint limits."""
-        # More realistic joint limits for a humanoid robot
-        # Left arm (7 joints) + Right arm (7 joints)
-        min_limits = np.array([
-            -2.8, -1.5, -2.8, -2.0, -2.8, -1.0, -2.8,  # Left arm
-            -2.8, -1.5, -2.8, -2.0, -2.8, -1.0, -2.8   # Right arm
-        ], dtype=np.float32)
+#     def get_joint_limits(self) -> Dict[str, np.ndarray]:
+#         """Get realistic joint limits."""
+#         # More realistic joint limits for a humanoid robot
+#         # Left arm (7 joints) + Right arm (7 joints)
+#         min_limits = np.array([
+#             -2.8, -1.5, -2.8, -2.0, -2.8, -1.0, -2.8,  # Left arm
+#             -2.8, -1.5, -2.8, -2.0, -2.8, -1.0, -2.8   # Right arm
+#         ], dtype=np.float32)
         
-        max_limits = np.array([
-            2.8, 1.5, 2.8, 2.0, 2.8, 1.0, 2.8,  # Left arm  
-            2.8, 1.5, 2.8, 2.0, 2.8, 1.0, 2.8   # Right arm
-        ], dtype=np.float32)
+#         max_limits = np.array([
+#             2.8, 1.5, 2.8, 2.0, 2.8, 1.0, 2.8,  # Left arm  
+#             2.8, 1.5, 2.8, 2.0, 2.8, 1.0, 2.8   # Right arm
+#         ], dtype=np.float32)
         
-        return {
-            'min': min_limits,
-            'max': max_limits
-        }
+#         return {
+#             'min': min_limits,
+#             'max': max_limits
+#         }
 
-    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
-        """
-        Reset specified joints to given angles in enhanced simulation mode.
+#     def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
+#         """
+#         Reset specified joints to given angles in enhanced simulation mode.
         
-        Args:
-            reset_joint_cfg: Dictionary mapping joint names to target angles
+#         Args:
+#             reset_joint_cfg: Dictionary mapping joint names to target angles
             
-        Returns:
-            True if reset successful
-        """
-        try:
-            print(f"[EXAMPLE] Resetting joints: {reset_joint_cfg}")
+#         Returns:
+#             True if reset successful
+#         """
+#         try:
+#             print(f"[EXAMPLE] Resetting joints: {reset_joint_cfg}")
             
-            # Get current joint angles
-            reset_angles = self._current_joint_angles.copy()
+#             # Get current joint angles
+#             reset_angles = self._current_joint_angles.copy()
             
-            # Update specified joints
-            for joint_name, angle in reset_joint_cfg.items():
-                if joint_name.startswith('joint_') or joint_name.startswith('arm_'):
-                    try:
-                        # Extract joint index from name
-                        if joint_name.startswith('joint_'):
-                            joint_idx = int(joint_name.split('_')[1])
-                        elif joint_name.startswith('arm_left_'):
-                            joint_idx = int(joint_name.split('_')[2])  # Left arm: indices 0-6
-                        elif joint_name.startswith('arm_right_'):
-                            joint_idx = int(joint_name.split('_')[2]) + 7  # Right arm: indices 7-13
-                        elif joint_name.startswith('arm_'):
-                            joint_idx = int(joint_name.split('_')[1])
-                        else:
-                            continue
+#             # Update specified joints
+#             for joint_name, angle in reset_joint_cfg.items():
+#                 if joint_name.startswith('joint_') or joint_name.startswith('arm_'):
+#                     try:
+#                         # Extract joint index from name
+#                         if joint_name.startswith('joint_'):
+#                             joint_idx = int(joint_name.split('_')[1])
+#                         elif joint_name.startswith('arm_left_'):
+#                             joint_idx = int(joint_name.split('_')[2])  # Left arm: indices 0-6
+#                         elif joint_name.startswith('arm_right_'):
+#                             joint_idx = int(joint_name.split('_')[2]) + 7  # Right arm: indices 7-13
+#                         elif joint_name.startswith('arm_'):
+#                             joint_idx = int(joint_name.split('_')[1])
+#                         else:
+#                             continue
                             
-                        if 0 <= joint_idx < self.num_joints:
-                            reset_angles[joint_idx] = float(angle)
-                            print(f"[EXAMPLE] Setting {joint_name} (index {joint_idx}) to {angle:.3f} rad")
-                        else:
-                            print(f"[EXAMPLE] Warning: Joint index {joint_idx} out of range [0, {self.num_joints-1}]")
-                    except (ValueError, IndexError) as e:
-                        print(f"[EXAMPLE] Warning: Invalid joint name '{joint_name}': {e}")
-                        continue
+#                         if 0 <= joint_idx < self.num_joints:
+#                             reset_angles[joint_idx] = float(angle)
+#                             print(f"[EXAMPLE] Setting {joint_name} (index {joint_idx}) to {angle:.3f} rad")
+#                         else:
+#                             print(f"[EXAMPLE] Warning: Joint index {joint_idx} out of range [0, {self.num_joints-1}]")
+#                     except (ValueError, IndexError) as e:
+#                         print(f"[EXAMPLE] Warning: Invalid joint name '{joint_name}': {e}")
+#                         continue
             
-            # Validate joint angles
-            if not self.validate_joint_angles(reset_angles):
-                print("[EXAMPLE] Reset angles out of range!")
-                # Clamp to valid range for simulation
-                limits = self.get_joint_limits()
-                reset_angles = np.clip(reset_angles, limits['min'], limits['max'])
-                print("[EXAMPLE] Clamped angles to valid range for simulation")
+#             # Validate joint angles
+#             if not self.validate_joint_angles(reset_angles):
+#                 print("[EXAMPLE] Reset angles out of range!")
+#                 # Clamp to valid range for simulation
+#                 limits = self.get_joint_limits()
+#                 reset_angles = np.clip(reset_angles, limits['min'], limits['max'])
+#                 print("[EXAMPLE] Clamped angles to valid range for simulation")
             
-            # Perform the reset movement
-            success = self.move_to_joint_angles(reset_angles, duration=2.0)
+#             # Perform the reset movement
+#             success = self.move_to_joint_angles(reset_angles, duration=2.0)
             
-            if success:
-                print(f"[EXAMPLE] Joint reset completed successfully")
-            else:
-                print(f"[EXAMPLE] Joint reset failed")
+#             if success:
+#                 print(f"[EXAMPLE] Joint reset completed successfully")
+#             else:
+#                 print(f"[EXAMPLE] Joint reset failed")
                 
-            return success
+#             return success
             
-        except Exception as e:
-            print(f"[EXAMPLE] Reset failed: {e}")
-            return False
+#         except Exception as e:
+#             print(f"[EXAMPLE] Reset failed: {e}")
+#             return False
     
 
 

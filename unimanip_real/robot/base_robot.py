@@ -20,7 +20,7 @@ class BaseRobot(ABC):
         pass
     
     @abstractmethod
-    def reset(self) -> None:
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> None:
         """Reset the robot to its initial state."""
         pass
     
