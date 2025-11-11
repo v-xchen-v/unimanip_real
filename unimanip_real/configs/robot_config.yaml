@@ -1,0 +1,25 @@
+robot:
+  sdk_type: "a2d"          # or "example", "dry_run", etc., used by create_robot_sdk
+  num_joints: 14           # matches RobotSDKWrapper
+
+  # Indices into RobotState.joint_angles for right arm & body
+  joint_mapping:
+    right_arm_indices: [7, 8, 9, 10, 11, 12, 13]   # example: right arm is last 7 joints
+    body_indices: [0, 1]                           # example: use first 2 as "body" joints
+
+    right_arm_joint_names:
+      - right_shoulder_pan
+      - right_shoulder_lift
+      - right_elbow
+      - right_wrist_1
+      - right_wrist_2
+      - right_wrist_3
+      - right_gripper
+
+    body_joint_names:
+      - waist_pan
+      - waist_tilt
+
+  sensors:
+    head_depth_available: true
+    right_arm_depth_available: false   # we’ll return all-zero image for this

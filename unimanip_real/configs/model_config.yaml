@@ -1,0 +1,18 @@
+# metadata only
+model_description: "rgb_depth_model, with only image as input, no state as input"
+
+end_point: "http://localhost:5000/api/inference"
+timeout: 30
+
+use_modalities:
+  rgb:
+    head_top: true
+    arm_right: true
+
+  depth:
+    head_top: true
+    arm_right: true
+
+  state:
+    ee_pose_true: false
+
