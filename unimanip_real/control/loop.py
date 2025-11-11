@@ -4,6 +4,7 @@ from ..robot.sdk_robot import SDKRobot
 from ..model.vla_client import APICClient
 from .observation import build_model_input
 from .action_postproc import action_to_joint_targets
+from ..constrants import get_reset_joint_cfg
 
 class InferenceLoop:
     def __init__(
@@ -11,12 +12,16 @@ class InferenceLoop:
         robot: SDKRobot,
         model_client: APICClient,
         config: Dict[str, Any],
+        task_name: str = "open_laptop",
     ):
         self.robot = robot
         self.model_client = model_client
         self.config = config
         self.dt = float(config["control"].get("dt", 0.1))
         self.log_every = int(config["control"].get("log_every", 10))
+        
+        # Task-specific setup can be added here if needed
+        self.task_reset_joint_cfg = get_reset_joint_cfg(task_name)
 
     def step_once(self, step_idx: int) -> None:
         # 1) get observation from robot
@@ -57,7 +62,7 @@ class InferenceLoop:
                 cmd = input("Command (r/n/m/q): ").strip().lower()
                 if cmd == "r":
                     print("[Loop] Resetting robot...")
-                    self.robot.reset()
+                    self.robot.reset(self.task_reset_joint_cfg)
                 elif cmd == "n":
                     print("[Loop] Running one step...")
                     self.step_once(step_idx)

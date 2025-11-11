@@ -5,11 +5,11 @@ from typing import Dict, Any, List
 import numpy as np
 import time
 
-from .base_robot import BaseRobot
+from .base_robot import BaseRobotSDK
 from ..core.types import RawObservation
 
 
-class FakeRobot(BaseRobot):
+class FakeRobotSDK(BaseRobotSDK):
     """
     A fake robot implementation for testing and simulation.
     This robot generates synthetic data and simulates robot movements
@@ -225,9 +225,10 @@ class FakeRobot(BaseRobot):
 
     # ------------ control ------------
 
-    def move_joints(self, joint_positions: np.ndarray) -> None:
+    def move_joints(self, joint_cfg: Dict[str, float]) -> None:
         """Move the robot joints to the specified positions (BaseRobot interface)."""
         # Assume joint_positions is the full concatenated array
+        joint_positions = list(joint_cfg.values())
         self.move_full_concatenated_joints(joint_positions, duration=1.0)
 
     def move_body_and_right_arm(self, body_q: np.ndarray, right_arm_q: np.ndarray, duration: float = 1.0) -> bool:

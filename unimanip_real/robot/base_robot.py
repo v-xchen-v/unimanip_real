@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 # TODO: use this contract to fake_robot and sdk_robot
-class BaseRobot(ABC):
+class BaseRobotSDK(ABC):
     def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         
@@ -30,6 +30,6 @@ class BaseRobot(ABC):
         pass
     
     @abstractmethod
-    def move_joints(self, joint_positions: np.ndarray) -> None:
+    def move_joints(self, joint_cfg: Dict[str, float]) -> None:
         """Move the robot joints to the specified positions."""
         pass

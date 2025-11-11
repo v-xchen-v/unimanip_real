@@ -12,7 +12,7 @@ import sys
 sys.path.append(str(PROJECT_ROOT))
 
 from unimanip_real.configs.config_loader import load_config
-from unimanip_real.robot.fake_robot import FakeRobot
+from unimanip_real.robot.fake_robot import FakeRobotSDK
 from unimanip_real.control.loop import InferenceLoop
 
 def fake_model_client():
@@ -30,14 +30,14 @@ def main():
     robot_cfg = load_config(config_path)
 
     # Initialize fake robot
-    fake_robot = FakeRobot(robot_cfg)
+    robot_api = FakeRobotSDK(robot_cfg)
 
     # fake model client
     model_client = fake_model_client()
     
     # Initialize control loop
     control_loop = InferenceLoop(
-        robot=fake_robot,
+        robot=robot_api,
         model_client=model_client,
         config=robot_cfg,
     )

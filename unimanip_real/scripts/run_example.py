@@ -1,5 +1,11 @@
 import numpy as np
 from typing import Dict, Any
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+import sys
+sys.path.append(str(PROJECT_ROOT))
+from unimanip_real.robot.example_robot import ExampleRobotSDK
 
 def construct_example_robot_config() -> Dict[str, Any]:
     """
@@ -61,19 +67,20 @@ def fake_model_client():
 
 def main():
     # Load configuration
-    robot_cfg = construct_example_robot_config()
-    task_config_path = Path(__file__).parent.parent / "configs" / "task_config.yaml"
-    task_cfg = load_config(task_config_path)
+    config_path = Path(__file__).parent.parent / "configs" / "fake_robot_config.yaml"
+    robot_cfg = load_config(config_path)
 
+
+    G1_120s_URDF_PATH = "/home/xichen/Documents/repos/unimanip_real/assets/g1/G1_120s/urdf/G1_120s.urdf"
     # Initialize fake robot
-    example_robot = SDKRobot(robot_cfg, task_cfg)
+    robot_api = ExampleRobotSDK(robot_cfg, urdf_path=G1_120s_URDF_PATH)
 
     # fake model client
     model_client = fake_model_client()
     
     # Initialize control loop
     control_loop = InferenceLoop(
-        robot=example_robot,
+        robot=robot_api,
         model_client=model_client,
         config=robot_cfg,
     )
