@@ -185,7 +185,7 @@ class A2DRobotSDK(BaseRobotSDK):
         }
         self.urdf_inspector.animate_robot(cfg_trajectory)   
     
-    def _move_joint_real(self, joint_positions: Dict[str, float], visualization:bool=True) -> bool:
+    def _move_joint_real(self, joint_positions: Dict[str, float], visualization:bool=False) -> bool:
         """Move real robot to target joinst:
             - right arm joints
             - right gripper joint
@@ -332,7 +332,7 @@ class A2DRobotSDK(BaseRobotSDK):
             pass
             
         
-    def _reset_real_robot(self, reset_joint_cfg, visualize=True):
+    def _reset_real_robot(self, reset_joint_cfg, visualize=False):
         if self.robot_api is None:
             print("Robot API not available, cannot reset")
             return False
