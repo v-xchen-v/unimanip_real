@@ -231,6 +231,12 @@ def _current_q_to_ee_pose(
     
     chain_joint_names = fk_kinematics.joint_names
     current_q_in_chain = {k: v for k, v in current_q.items() if k in chain_joint_names}
+    # get body joint from reset cfg
+    reset_q_cfg = get_reset_joint_cfg("open_laptop")
+    for joint_name in ["idx01_body_joint1", "idx02_body_joint2"]:
+        if joint_name not in current_q_in_chain:
+            current_q_in_chain[joint_name] = reset_q_cfg[joint_name]
+        
     current_pose = fk_kinematics.fk(current_q_in_chain)
     ee_pose = current_pose.as_flat_array()
     
@@ -260,18 +266,18 @@ def apply_action_to_current_pose(
     
     Return the new end-effector pose after applying the action.
     """
+    xyz_scale = 0.025
+    euler_scale = 0.025
     action = actions[0] # only use the first step
     action_delta_xyz = action[:3]
     action_delta_euler = action[3:6]  # Assuming action contains quaternion delta
     action_delta_quat = euler_to_quaternion(
-        roll=action_delta_euler[0],
-        pitch=action_delta_euler[1],
-        yaw=action_delta_euler[2],
+        roll=action_delta_euler[0]*euler_scale,
+        pitch=action_delta_euler[1]*euler_scale,
+        yaw=action_delta_euler[2]*euler_scale,
     )
     action_gripper = action[6]
     
-    xyz_scale = 0.025
-    euler_scale = 0.025
     new_xyz = current_pose[:3] + (np.array(action_delta_xyz) * xyz_scale).tolist()
     new_quat = compose_quat(current_pose[3:7], action_delta_quat)
     new_pose = np.concatenate([new_xyz, new_quat], axis=0)
@@ -324,10 +330,14 @@ def get_new_joint_targets_from_ee_pose(
     delta_q_dict_deg = {joint: np.degrees(delta_q_dict[joint]) for joint in delta_q_dict}
     print(delta_q_dict_deg)
     
+    # print ik delta 
+    delta_achieved2target = ik_result.info["achieved_pose"].xyz - target_pose.xyz
+    print(f"IK achieved - target xyz: {delta_achieved2target}")
+
     joint_targets = new_q_dict
     
     # Placeholder implementation
-    joint_targets = {}  # e.g., {"joint1": 0.0, "joint2": 1.0, ...}
+    # joint_targets = {}  # e.g., {"joint1": 0.0, "joint2": 1.0, ...}
     return joint_targets
 
 def action_to_joint_targets(
