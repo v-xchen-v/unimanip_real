@@ -15,9 +15,14 @@ class SDKRobot:
     for unmanip_real.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], task_config: Dict[str, Any] = None) -> None:
         self.config = config
         robot_cfg = config.get("robot", {})
+        
+        # reset joints, ... in task config
+        self.task_config = task_config if task_config is not None else {}
+        self.reset_joints_cfg = self.task_config.get("reset_joints", {})
+        
         sdk_type = robot_cfg.get("sdk_type", "example")
         sdk_config = {
             "num_joints": robot_cfg.get("num_joints", 14),
@@ -34,6 +39,11 @@ class SDKRobot:
         self.body_indices: List[int] = jm["body_indices"]
         self.right_arm_joint_names: List[str] = jm["right_arm_joint_names"]
         self.body_joint_names: List[str] = jm["body_joint_names"]
+        self.left_joint_names: List[str] = jm.get("left_joint_names", [])
+        self.head_joint_names: List[str] = jm.get("head_joint_names", [])
+        self.wholebody_joint_names: List[str] = (
+            self.body_joint_names + self.right_arm_joint_names + self.left_joint_names + self.head_joint_names
+        )
 
         sensors = robot_cfg.get("sensors", {})
         self.head_depth_available = sensors.get("head_depth_available", False)
@@ -47,12 +57,25 @@ class SDKRobot:
     def disconnect(self) -> None:
         self.sdk.disconnect()
 
-    def reset(self) -> bool:
+    def home(self) -> bool:
         """Use SDK's home_robot as reset."""
         if hasattr(self.sdk, "home_robot"):
             return self.sdk.home_robot()
         print("[SDKRobot] home_robot not implemented in SDK, no-op reset.")
         return True
+    
+    def reset(self) -> bool:
+        # get reset joints from task_config
+        if not "reset_joints" in self.task_config:
+            print("[SDKRobot] No reset_joints found in task_config")
+            raise ValueError("reset_joints not found in task_config")
+        
+        reset_joints_cfg = self.task_config["reset_joints"]
+        print(f"[SDKRobot] Reset joints config: {reset_joints_cfg}")
+    
+                
+        # return self.sdk.move_to_joint_angles(full, duration=2.0)
+        return self.sdk.reset(reset_joints_cfg)
 
     # ------------ core helpers ------------
 

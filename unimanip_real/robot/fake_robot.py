@@ -5,19 +5,22 @@ from typing import Dict, Any, List
 import numpy as np
 import time
 
+from .base_robot import BaseRobotSDK
 from ..core.types import RawObservation
 
 
-class FakeRobot:
+class FakeRobotSDK(BaseRobotSDK):
     """
     A fake robot implementation for testing and simulation.
     This robot generates synthetic data and simulates robot movements
     without requiring actual hardware.
     """
 
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
-        robot_cfg = config.get("robot", {})
+    def __init__(self, robot_config: Dict[str, Any]) -> None:
+        # Call parent constructor
+        super().__init__(robot_config)
+        
+        robot_cfg = robot_config.get("robot", {})
         
         # Robot configuration
         self.num_joints = robot_cfg.get("num_joints", 14)
@@ -67,9 +70,14 @@ class FakeRobot:
         self.is_connected = False
         print("[FakeRobot] Disconnected")
 
-    def reset(self) -> bool:
+    def reset(self, reset_joint_cfg: Dict[str, float]) -> bool:
         """Reset robot to home position."""
         print("[FakeRobot] Resetting to home position...")
+        
+        from ..constrants import get_reset_joint_cfg
+        joint_cfg = get_reset_joint_cfg("open_laptop")
+        print(f"[FakeRobot] Reset joints config: {joint_cfg}")
+            
         self.current_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
         self.target_joint_angles = np.zeros(self.num_joints, dtype=np.float32)
         self.current_ee_pose = np.array([0.5, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0], dtype=np.float32)
@@ -155,9 +163,27 @@ class FakeRobot:
         depth += 0.1 * np.random.randn(self.image_height, self.image_width)
         depth = np.clip(depth, 0.1, 5.0)  # Reasonable depth range
         
+        # Duplicate depth 1 channel to make it 3-channel if needed
+        depth = np.stack([depth]*3, axis=-1)
         return depth
 
     # ------------ observation ------------
+
+    # def get_raw_observation(self) -> RawObservation:
+    #     """Get the current observation from the robot (BaseRobot interface)."""
+    #     raw_obs = self.get_raw_observation()
+    #     # Convert RawObservation to dict for BaseRobot compatibility
+    #     # return {
+    #     #     'head_top_rgb': raw_obs.head_top_rgb,
+    #     #     'right_wrist_rgb': raw_obs.right_wrist_rgb,
+    #     #     'head_top_depth': raw_obs.head_top_depth,
+    #     #     'right_wrist_depth': raw_obs.right_wrist_depth,
+    #     #     'right_arm_q': raw_obs.right_arm_q,
+    #     #     'body_q': raw_obs.body_q,
+    #     #     'right_arm_joint_names': raw_obs.right_arm_joint_names,
+    #     #     'body_joint_names': raw_obs.body_joint_names,
+    #     # }
+    #     return raw_obs
 
     def get_raw_observation(self) -> RawObservation:
         """Generate a synthetic observation."""
@@ -187,7 +213,7 @@ class FakeRobot:
             right_arm_depth = self._generate_synthetic_depth()
         else:
             # Right wrist depth cannot be grabbed -> use all zeros
-            right_arm_depth = np.zeros((self.image_height, self.image_width), dtype=np.float32)
+            right_arm_depth = np.zeros((self.image_height, self.image_width, 3), dtype=np.float32)
 
         return RawObservation(
             head_top_rgb=rgb.copy(),
@@ -201,6 +227,15 @@ class FakeRobot:
         )
 
     # ------------ control ------------
+
+    def move_joints(self, joint_cfg: Dict[str, float]) -> None:
+        """Move the robot joints to the specified positions (BaseRobot interface)."""
+        # Assume joint_positions is the full concatenated array
+        if joint_cfg is None:
+            # fake a joint_cfg for testing
+            joint_cfg = {f"joint_{i}": 0.0 for i in range(0, 9)}
+        joint_positions = list(joint_cfg.values())
+        self.move_full_concatenated_joints(joint_positions, duration=1.0)
 
     def move_body_and_right_arm(self, body_q: np.ndarray, right_arm_q: np.ndarray, duration: float = 1.0) -> bool:
         """Simulate movement of body and right arm joints."""
@@ -251,7 +286,7 @@ class FakeRobot:
         """Check if robot is currently executing a movement."""
         return self.move_start_time is not None
 
-    def get_current_joint_angles(self) -> np.ndarray:
+    def get_current_joints(self) -> np.ndarray:
         """Get current joint angles."""
         self._update_joint_simulation()
         return self.current_joint_angles.copy()

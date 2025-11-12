@@ -12,34 +12,42 @@ import sys
 sys.path.append(str(PROJECT_ROOT))
 
 from unimanip_real.configs.config_loader import load_config
-from unimanip_real.robot.fake_robot import FakeRobot
+from unimanip_real.robot.fake_robot import FakeRobotSDK
 from unimanip_real.control.loop import InferenceLoop
 
 def fake_model_client():
     class FakeModelClient:
         def predict(self, model_input):
+            # a fake action pose [x, y, z, rw, rx, ry, rz]
+            import numpy as np
+            from scipy.spatial.transform import Rotation as R
+            quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat()
+            xyz = [0.05, 0.05, 0.05]
+            action_delta_pose = xyz + quat_wxyz.tolist()
+
             # Return zero action for testing
             return {
-                "joint_deltas": [0.0] * len(model_input["joint_angles"])
+                # "joint_deltas": [0.0] * len(model_input["joint_angles"])
+                "actions": action_delta_pose
             }
     return FakeModelClient()
 
 def main():
     # Load configuration
     config_path = Path(__file__).parent.parent / "configs" / "fake_robot_config.yaml"
-    cfg = load_config(config_path)
+    robot_cfg = load_config(config_path)
 
     # Initialize fake robot
-    fake_robot = FakeRobot(cfg)
+    robot_api = FakeRobotSDK(robot_cfg)
 
     # fake model client
     model_client = fake_model_client()
     
     # Initialize control loop
     control_loop = InferenceLoop(
-        robot=fake_robot,
+        robot=robot_api,
         model_client=model_client,
-        config=cfg,
+        config=robot_cfg,
     )
 
     # Run interactive control loop

@@ -4,23 +4,29 @@ from ..robot.sdk_robot import SDKRobot
 from ..model.vla_client import APICClient
 from .observation import build_model_input
 from .action_postproc import action_to_joint_targets
+from ..constrants import get_reset_joint_cfg
+from ..robot.base_robot import BaseRobotSDK
 
 class InferenceLoop:
     def __init__(
         self,
-        robot: SDKRobot,
+        robot: BaseRobotSDK,
         model_client: APICClient,
         config: Dict[str, Any],
+        task_name: str = "open_laptop",
     ):
-        self.robot = robot
+        self.robot_api = robot
         self.model_client = model_client
         self.config = config
         self.dt = float(config["control"].get("dt", 0.1))
         self.log_every = int(config["control"].get("log_every", 10))
+        
+        # Task-specific setup can be added here if needed
+        self.task_reset_joint_cfg = get_reset_joint_cfg(task_name)
 
     def step_once(self, step_idx: int) -> None:
         # 1) get observation from robot
-        obs = self.robot.get_raw_observation()
+        obs = self.robot_api.get_raw_observation()
 
         # 2) pack into model input
         model_input = build_model_input(obs)
@@ -28,15 +34,18 @@ class InferenceLoop:
         # 3) call model
         action = self.model_client.predict(model_input)
 
+        # 4) get current joint positions
+        current_q = self.robot_api.get_current_joints()
+        
         # 4) convert to joint targets
         q_target = action_to_joint_targets(
-            action=action,
-            current_q=obs.right_arm_q.tolist() + obs.body_q.tolist(),
+            action=action["action"],
+            current_q=current_q,
             config=self.config,
         )
 
         # 5) send to robot
-        self.robot.move_full_concatenated_joints(q_target)
+        self.robot_api.move_joints(q_target)
 
         if step_idx % self.log_every == 0:
             print(f"[Loop] step {step_idx} done.")
@@ -49,7 +58,7 @@ class InferenceLoop:
           m: enter auto mode (continuous steps until Ctrl+C)
           q: quit
         """
-        self.robot.connect()
+        self.robot_api.connect()
         try:
             print("Commands: [r]=reset, [n]=next step, [m]=auto run, [q]=quit")
             step_idx = 0
@@ -57,7 +66,7 @@ class InferenceLoop:
                 cmd = input("Command (r/n/m/q): ").strip().lower()
                 if cmd == "r":
                     print("[Loop] Resetting robot...")
-                    self.robot.reset()
+                    self.robot_api.reset(reset_joint_cfg=self.task_reset_joint_cfg)
                 elif cmd == "n":
                     print("[Loop] Running one step...")
                     self.step_once(step_idx)
@@ -78,4 +87,4 @@ class InferenceLoop:
                 else:
                     print("[Loop] Unknown command, use r/n/m/q.")
         finally:
-            self.robot.disconnect()
+            self.robot_api.disconnect()
