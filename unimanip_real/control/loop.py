@@ -19,6 +19,7 @@ class InferenceLoop:
         self.model_client = model_client
         self.config = config
         # self.dt = float(config["control"].get("dt", 0.1))
+        self.dt = 0.1
         # self.log_every = int(config["control"].get("log_every", 10))
         self.log_every = 10
         

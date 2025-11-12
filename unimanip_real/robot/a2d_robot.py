@@ -227,23 +227,23 @@ class A2DRobotSDK(BaseRobotSDK):
             # Implement actual robot joint movement here
             print(f"Moving robot joints: {new_q}")
             
-            self.robot_api.move_arm([new_q[name] for name in self.arm_joint_names])
-            self.robot_api.move_gripper(
-                [
-                    np.clip(new_q['idx41_gripper_l_outer_joint1'], 0, 1),
-                    np.clip(new_q['idx81_gripper_r_outer_joint1'], 0, 1)
-                ]
-            )
-            # self.robot_api.reset(
-            #     arm_positions=[new_q[name] for name in self.arm_joint_names],
-            #     gripper_positions=[
-            #         new_q["idx41_gripper_l_outer_joint1"],
-            #         new_q["idx81_gripper_r_outer_joint1"]
-            #     ],
-            #     hand_positions=None, # keep still
-            #     waist_positions=list(waist_q.values()), # keep still
-            #     head_positions=None, # keep still
+            # self.robot_api.move_arm([new_q[name] for name in self.arm_joint_names])
+            # self.robot_api.move_gripper(
+            #     [
+            #         np.clip(new_q['idx41_gripper_l_outer_joint1'], 0, 1),
+            #         np.clip(new_q['idx81_gripper_r_outer_joint1'], 0, 1)
+            #     ]
             # )
+            self.robot_api.reset(
+                arm_positions=[new_q[name] for name in self.arm_joint_names],
+                gripper_positions=[
+                    new_q["idx41_gripper_l_outer_joint1"],
+                    new_q["idx81_gripper_r_outer_joint1"]
+                ],
+                hand_positions=None, # keep still
+                waist_positions=list(waist_q.values()), # keep still
+                head_positions=None, # keep still
+            )
             return True
         except Exception as e:
             print(f"Failed to move joints: {e}")

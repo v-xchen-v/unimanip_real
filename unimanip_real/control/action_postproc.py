@@ -260,18 +260,18 @@ def apply_action_to_current_pose(
     
     Return the new end-effector pose after applying the action.
     """
+    xyz_scale = 0.025
+    euler_scale = 0.025
     action = actions[0] # only use the first step
     action_delta_xyz = action[:3]
     action_delta_euler = action[3:6]  # Assuming action contains quaternion delta
     action_delta_quat = euler_to_quaternion(
-        roll=action_delta_euler[0],
-        pitch=action_delta_euler[1],
-        yaw=action_delta_euler[2],
+        roll=action_delta_euler[0]*euler_scale,
+        pitch=action_delta_euler[1]*euler_scale,
+        yaw=action_delta_euler[2]*euler_scale,
     )
     action_gripper = action[6]
     
-    xyz_scale = 0.025
-    euler_scale = 0.025
     new_xyz = current_pose[:3] + (np.array(action_delta_xyz) * xyz_scale).tolist()
     new_quat = compose_quat(current_pose[3:7], action_delta_quat)
     new_pose = np.concatenate([new_xyz, new_quat], axis=0)
