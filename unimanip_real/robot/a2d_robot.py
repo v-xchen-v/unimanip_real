@@ -136,20 +136,61 @@ class A2DRobotSDK(BaseRobotSDK):
             self.simulated_joints.update(joint_positions)
             return True
             
-        # if self.robot_api is None:
-        #     print("Robot API not available, cannot move joints")
-        #     return False
+        else:
+            # comment now to ensure real robot not moving when debugging other parts
+            # return self._move_joint_real(joint_positions)
+            pass
+        
+    def _move_joint_real(self, joint_positions: Dict[str, float]) -> bool:
+        """Move real robot to target joinst:
+            - right arm joints
+            - right gripper joint
             
-        # try:
-        #     # Implement actual robot joint movement here
-        #     # This would use the A2D SDK to move joints
-        #     print(f"Moving robot joints: {joint_positions}")
-        #     # TODO: Implement actual joint movement using self.robot_api
-        #     return True
-        # except Exception as e:
-        #     print(f"Failed to move joints: {e}")
-        #     return False
-    
+            not moving:
+            - left arm joints (keep current position)
+            - head joints (keep current position)
+            - waist joints (keep current position)
+            - left gripper joint (keep current position, closed)
+        """
+        
+        if self.robot_api is None:
+            print("Robot API not available, cannot move joints")
+            return False
+        
+        current_q = self.get_current_joints()
+        if current_q is None:
+            print("Cannot get current joints, abort move")
+            return False
+        
+        left_arm_q = {name: current_q[name] for name in self.left_arm_joint_names}
+        head_q = {name: current_q[name] for name in self.head_joint_names}
+        waist_q = {name: current_q[name] for name in self.waist_joint_names}
+        left_gripper_q = {"idx41_gripper_l_outer_joint1": current_q["idx41_gripper_l_outer_joint1"]}
+        
+        new_right_arm_q = {name: joint_positions[name] for name in self.right_arm_joint_names}
+        new_gripper_q = {name: joint_positions[name] for name in ["idx81_gripper_r_outer_joint1"] if name in joint_positions}
+        
+        # Combine all joint positions
+        final_joint_positions = {**left_arm_q, **head_q, **waist_q, **new_right_arm_q, **new_gripper_q, **left_gripper_q}
+        try:
+            # Implement actual robot joint movement here
+            print(f"Moving robot joints: {final_joint_positions}")
+            
+            self.robot_api.reset(
+                arm_positions=[final_joint_positions[name] for name in self.arm_joint_names],
+                gripper_positions=[
+                    final_joint_positions["idx41_gripper_l_outer_joint1"],
+                    final_joint_positions["idx81_gripper_r_outer_joint1"]
+                ],
+                hand_positions=None, # keep still
+                waist_positions=None, # keep still
+                head_positions=None, # keep still
+            )
+            return True
+        except Exception as e:
+            print(f"Failed to move joints: {e}")
+            return False
+
     def get_current_joints(self) -> Dict[str, float]:
         """Get current state from A2D robot or simulated state."""
         if self.sim_only:
