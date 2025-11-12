@@ -1,6 +1,30 @@
-def get_reset_joint_cfg(task_name: str) -> dict:
+def get_reset_joint_cfg(task_name: str, left_arm_only=False) -> dict:
     """Get the reset joint configuration for a given task."""
+    if left_arm_only:
+        return {name: reset_joint_cfg[task_name][name] for name in left_arm_joint_names}
+    
     return reset_joint_cfg.get(task_name, {})
+
+
+left_arm_joint_names = [
+    "idx21_arm_l_joint1",
+    "idx22_arm_l_joint2",
+    "idx23_arm_l_joint3",
+    "idx24_arm_l_joint4",
+    "idx25_arm_l_joint5",
+    "idx26_arm_l_joint6",
+    "idx27_arm_l_joint7",
+]
+right_arm_joint_names = [
+    "idx61_arm_r_joint1",
+    "idx62_arm_r_joint2",
+    "idx63_arm_r_joint3",
+    "idx64_arm_r_joint4",
+    "idx65_arm_r_joint5",
+    "idx66_arm_r_joint6",
+    "idx67_arm_r_joint7",
+]
+arm_joint_names = left_arm_joint_names + right_arm_joint_names
 
 reset_joint_cfg = {
     "open_laptop": {
