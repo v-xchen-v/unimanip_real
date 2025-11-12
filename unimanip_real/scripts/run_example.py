@@ -7,43 +7,43 @@ import sys
 sys.path.append(str(PROJECT_ROOT))
 from unimanip_real.robot.example_robot import ExampleRobotSDK
 
-def construct_example_robot_config() -> Dict[str, Any]:
-    """
-    Construct a default configuration dictionary for the ExampleRobotSDK.
-    This can be used for testing or as a template for real configurations.
-    """
-    config = {
-        "robot": {
-            "sdk_type": "example",
-            "num_joints": 14,
-            "joint_mapping": {
-                "right_arm_indices": [7, 8, 9, 10, 11, 12, 13],  # Example indices for right arm joints
-                "body_indices": [0, 1],
-                "right_arm_joint_names": [
-                    "idx61_arm_r_joint1",
-                    "idx62_arm_r_joint2",
-                    "idx63_arm_r_joint3",
-                    "idx64_arm_r_joint4",
-                    "idx65_arm_r_joint5",
-                    "idx66_arm_r_joint6",
-                    "idx67_arm_r_joint7"
-                ],
-                "body_joint_names": [
-                    "idx01_body_joint1",
-                    "idx02_body_joint2"
-                ],
-            },
-            "sensors": {
-                "head_depth_available": True,
-                "right_wrist_depth_available": False
-            },
+# def construct_example_robot_config() -> Dict[str, Any]:
+#     """
+#     Construct a default configuration dictionary for the ExampleRobotSDK.
+#     This can be used for testing or as a template for real configurations.
+#     """
+#     config = {
+#         "robot": {
+#             "sdk_type": "example",
+#             "num_joints": 14,
+#             "joint_mapping": {
+#                 "right_arm_indices": [7, 8, 9, 10, 11, 12, 13],  # Example indices for right arm joints
+#                 "body_indices": [0, 1],
+#                 "right_arm_joint_names": [
+#                     "idx61_arm_r_joint1",
+#                     "idx62_arm_r_joint2",
+#                     "idx63_arm_r_joint3",
+#                     "idx64_arm_r_joint4",
+#                     "idx65_arm_r_joint5",
+#                     "idx66_arm_r_joint6",
+#                     "idx67_arm_r_joint7"
+#                 ],
+#                 "body_joint_names": [
+#                     "idx01_body_joint1",
+#                     "idx02_body_joint2"
+#                 ],
+#             },
+#             "sensors": {
+#                 "head_depth_available": True,
+#                 "right_wrist_depth_available": False
+#             },
             
-        },
-        "control": {
-                "dt": 0.02  # control timestep in seconds
-        }
-    }
-    return config
+#         },
+#         "control": {
+#                 "dt": 0.02  # control timestep in seconds
+#         }
+#     }
+#     return config
 
 
 from pathlib import Path
@@ -55,24 +55,7 @@ sys.path.append(str(PROJECT_ROOT))
 from unimanip_real.configs.config_loader import load_config
 from unimanip_real.robot.sdk_robot import SDKRobot
 from unimanip_real.control.loop import InferenceLoop
-
-def fake_model_client():
-    class FakeModelClient:
-        def predict(self, model_input):
-            # a fake action pose [x, y, z, rw, rx, ry, rz]
-            import numpy as np
-            from scipy.spatial.transform import Rotation as R
-            quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat(scalar_first=True)
-            # xyz = [0.05, 0.05, 0.05]
-            xyz = [0.0, 0.0, 0.0]
-            action_delta_pose = xyz + quat_wxyz.tolist()
-
-            # Return zero action for testing
-            return {
-                # "joint_deltas": [0.0] * len(model_input["joint_angles"])
-                "action": action_delta_pose
-            }
-    return FakeModelClient()
+from unimanip_real.model.vla_client import fake_model_client
 
 def main():
     # Load configuration

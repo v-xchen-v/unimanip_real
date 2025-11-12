@@ -4,6 +4,7 @@ from typing import Dict, Any
 import numpy as np
 from dataclasses import dataclass
 from ..constrants import get_reset_joint_cfg
+from ..control.observation import RawObservation
 
 
 
@@ -35,6 +36,13 @@ class A2DRobotSDK(BaseRobotSDK):
             from a2d_sdk.robot import RobotDds
             self.robot_api = RobotDds()
             print(f"A2D Robot SDK initialized, waiting {self.initialization_delay}s for robot initialization...")
+        
+            from a2d_sdk.robot import CosineCamera as Camera
+            self.robot_camera_api = Camera([
+                "head", # head top rgb
+                "head_depth", # head depth
+                "hand_right", # right hand rgb
+            ])
         except ImportError:
             print("Warning: a2d_sdk not found. Please install the A2D SDK or use simulation mode.")
             self.robot_api = None
@@ -112,11 +120,14 @@ class A2DRobotSDK(BaseRobotSDK):
             return False
         
     def disconnect(self):
-        super().disconnect()
+            
+        if self.robot_camera_api is not None:
+            self.robot_camera_api.close() # close camera after diconnect
+            print("Disconnected from A2D robot camera")
+    
         if self.robot_api is not None:
             print("Disconnected from A2D robot")
             self.is_connected = False
-    
     def move_joints(self, joint_positions: Dict[str, float]) -> bool:
         """Move robot joints to specified positions or simulate movement."""
         if self.sim_only:
@@ -125,20 +136,61 @@ class A2DRobotSDK(BaseRobotSDK):
             self.simulated_joints.update(joint_positions)
             return True
             
+        else:
+            # comment now to ensure real robot not moving when debugging other parts
+            # return self._move_joint_real(joint_positions)
+            pass
+        
+    def _move_joint_real(self, joint_positions: Dict[str, float]) -> bool:
+        """Move real robot to target joinst:
+            - right arm joints
+            - right gripper joint
+            
+            not moving:
+            - left arm joints (keep current position)
+            - head joints (keep current position)
+            - waist joints (keep current position)
+            - left gripper joint (keep current position, closed)
+        """
+        
         if self.robot_api is None:
             print("Robot API not available, cannot move joints")
             return False
-            
+        
+        current_q = self.get_current_joints()
+        if current_q is None:
+            print("Cannot get current joints, abort move")
+            return False
+        
+        left_arm_q = {name: current_q[name] for name in self.left_arm_joint_names}
+        head_q = {name: current_q[name] for name in self.head_joint_names}
+        waist_q = {name: current_q[name] for name in self.waist_joint_names}
+        left_gripper_q = {"idx41_gripper_l_outer_joint1": current_q["idx41_gripper_l_outer_joint1"]}
+        
+        new_right_arm_q = {name: joint_positions[name] for name in self.right_arm_joint_names}
+        new_gripper_q = {name: joint_positions[name] for name in ["idx81_gripper_r_outer_joint1"] if name in joint_positions}
+        
+        # Combine all joint positions
+        final_joint_positions = {**left_arm_q, **head_q, **waist_q, **new_right_arm_q, **new_gripper_q, **left_gripper_q}
         try:
             # Implement actual robot joint movement here
-            # This would use the A2D SDK to move joints
-            print(f"Moving robot joints: {joint_positions}")
-            # TODO: Implement actual joint movement using self.robot_api
+            print(f"Moving robot joints: {final_joint_positions}")
+            
+            self.robot_api.reset(
+                arm_positions=[final_joint_positions[name] for name in self.arm_joint_names],
+                gripper_positions=[
+                    final_joint_positions["idx41_gripper_l_outer_joint1"],
+                    final_joint_positions["idx81_gripper_r_outer_joint1"]
+                ],
+                hand_positions=None, # keep still
+                waist_positions=None, # keep still
+                head_positions=None, # keep still
+            )
             return True
         except Exception as e:
             print(f"Failed to move joints: {e}")
             return False
-    
+
     def get_current_joints(self) -> Dict[str, float]:
         """Get current state from A2D robot or simulated state."""
         if self.sim_only:
@@ -208,80 +260,85 @@ class A2DRobotSDK(BaseRobotSDK):
             self.simulated_joints.update(reset_joint_cfg)
             return True
             
-        if self.robot_api is None:
-            print("Robot API not available, cannot reset")
-            return False
+        # if self.robot_api is None:
+        #     print("Robot API not available, cannot reset")
+        #     return False
         
-        try:
-            # Use current left arm joint to left arm fixed
-            current_q = self.get_current_joints()
-            current_left_arm_q = {
-                name: current_q[name] for name in self.left_arm_joint_names
-            }
+        # try:
+        #     # Use current left arm joint to left arm fixed
+        #     current_q = self.get_current_joints()
+        #     current_left_arm_q = {
+        #         name: current_q[name] for name in self.left_arm_joint_names
+        #     }
             
-            # User right arm reset joints from reset_joint_cfg
-            right_arm_reset_q = {
-                name: reset_joint_cfg[name] for name in self.right_arm_joint_names
-            }
-            # combine left arm current q and right arm reset q
-            arm_positions = []
-            for name in self.left_arm_joint_names:
-                arm_positions.append(current_left_arm_q[name])
-            for name in self.right_arm_joint_names:
-                arm_positions.append(right_arm_reset_q[name])
+        #     # User right arm reset joints from reset_joint_cfg
+        #     right_arm_reset_q = {
+        #         name: reset_joint_cfg[name] for name in self.right_arm_joint_names
+        #     }
+        #     # combine left arm current q and right arm reset q
+        #     arm_positions = []
+        #     for name in self.left_arm_joint_names:
+        #         arm_positions.append(current_left_arm_q[name])
+        #     for name in self.right_arm_joint_names:
+        #         arm_positions.append(right_arm_reset_q[name])
                 
-            head_positions = [
-                reset_joint_cfg[name] for name in self.head_joint_names
-            ]
-            waist_positions = [
-                reset_joint_cfg[name] for name in self.waist_joint_names
-            ]
+        #     head_positions = [
+        #         reset_joint_cfg[name] for name in self.head_joint_names
+        #     ]
+        #     waist_positions = [
+        #         reset_joint_cfg[name] for name in self.waist_joint_names
+        #     ]
             
-            # gripper_positions = [
-            #     reset_joint_cfg[name] for name in self.gripper_joint_names
-            # ]
+        #     # gripper_positions = [
+        #     #     reset_joint_cfg[name] for name in self.gripper_joint_names
+        #     # ]
             
-            self.robot_api.reset(
-                arm_positions=arm_positions,
-                gripper_positions=[0.0, 1.0],  # Keep left grippers closed, right gripper open
-                hand_positions=None,
-                waist_positions=waist_positions,  
-                head_positions=head_positions  
-            )
-            return True
-        except Exception as e:
-            print(f"Failed to reset robot: {e}")
-            return False
+        #     self.robot_api.reset(
+        #         arm_positions=arm_positions,
+        #         gripper_positions=[0.0, 1.0],  # Keep left grippers closed, right gripper open
+        #         hand_positions=None,
+        #         waist_positions=waist_positions,  
+        #         head_positions=head_positions  
+        #     )
+        #     return True
+        # except Exception as e:
+        #     print(f"Failed to reset robot: {e}")
+        #     return False
         
-    def get_raw_observation(self) -> Dict[str, Any]:
+    def get_raw_observation(self) -> RawObservation:
         """Get the current observation from the robot."""
-        if self.sim_only:
-            print("Returning simulated observation")
-            return {
-                "joints": self.simulated_joints.copy(),
-                "timestamp": time.time(),
-                "simulation_mode": True
-            }
-            
-        if self.robot_api is None:
-            print("Robot API not available, returning dummy observation")
-            return {
-                "joints": {},
-                "timestamp": time.time(),
-                "error": "Robot API not available"
-            }
-            
-        try:
-            current_joints = self.get_current_joints()
-            return {
-                "joints": current_joints,
-                "timestamp": time.time(),
-                "simulation_mode": False
-            }
-        except Exception as e:
-            print(f"Failed to get raw observation: {e}")
-            return {
-                "joints": {},
-                "timestamp": time.time(),
-                "error": str(e)
-            }
+        # return None
+        raw_obs = RawObservation(
+            head_top_rgb=self._get_head_rgb_image(),
+            right_wrist_rgb=self._get_right_wrist_rgb_image(),
+            head_top_depth=self._get_head_depth_image(),
+            right_wrist_depth=self._get_right_wrist_depth_image(),
+        )
+        return raw_obs
+    
+    
+    def _get_head_rgb_image(self) -> np.ndarray:
+        """Simulate getting an RGB image from the head camera."""
+        # # For simulation, return a dummy image (e.g., all zeros)
+        # return np.zeros((1280, 720, 3), dtype=np.uint8)
+        raw_head_top_rgb, _ = self.robot_camera_api.get_latest_image("head")
+        return raw_head_top_rgb
+        
+    def _get_right_wrist_rgb_image(self) -> np.ndarray:
+        """Simulate getting an RGB image from the right wrist camera."""
+        # # For simulation, return a dummy image (e.g., all zeros)
+        # return np.zeros((480, 848, 3), dtype=np.uint8)
+        raw_right_wrist_rgb, _ = self.robot_camera_api.get_latest_image("hand_right")
+        return raw_right_wrist_rgb
+
+    def _get_head_depth_image(self) -> np.ndarray:
+        """Simulate getting a depth image from the head camera."""
+        # # For simulation, return a dummy depth image (e.g., all zeros)
+        # return np.zeros((1280, 720, 1), dtype=np.float32)
+        raw_head_top_depth, _ = self.robot_camera_api.get_latest_image("head_depth")
+        return raw_head_top_depth
+
+    def _get_right_wrist_depth_image(self) -> np.ndarray:
+        """Simulate getting a depth image from the right wrist camera."""
+        # No depth image of right wrist, return a dummy depth image (e.g., all zeros) instead
+        return np.zeros((480, 848, 1), dtype=np.float32)

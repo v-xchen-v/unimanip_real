@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 import numpy as np
+from ..control.observation import RawObservation
 
 # TODO: use this contract to fake_robot and sdk_robot
 class BaseRobotSDK(ABC):
@@ -25,7 +26,7 @@ class BaseRobotSDK(ABC):
         pass
     
     @abstractmethod
-    def get_raw_observation(self) -> Dict[str, Any]:
+    def get_raw_observation(self) -> RawObservation: # Dict[str, Any]:
         """Get the current observation from the robot."""
         pass
     
