@@ -39,7 +39,7 @@ class InferenceLoop:
         
         # 4) convert to joint targets
         q_target = action_to_joint_targets(
-            action=action,
+            action=action["action"],
             current_q=current_q,
             config=self.config,
         )

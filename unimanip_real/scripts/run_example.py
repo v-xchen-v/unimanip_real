@@ -62,14 +62,15 @@ def fake_model_client():
             # a fake action pose [x, y, z, rw, rx, ry, rz]
             import numpy as np
             from scipy.spatial.transform import Rotation as R
-            quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat()
-            xyz = [0.05, 0.05, 0.05]
+            quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat(scalar_first=True)
+            # xyz = [0.05, 0.05, 0.05]
+            xyz = [0.0, 0.0, 0.0]
             action_delta_pose = xyz + quat_wxyz.tolist()
 
             # Return zero action for testing
             return {
                 # "joint_deltas": [0.0] * len(model_input["joint_angles"])
-                "actions": action_delta_pose
+                "action": action_delta_pose
             }
     return FakeModelClient()
 

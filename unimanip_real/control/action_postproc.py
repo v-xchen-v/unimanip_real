@@ -4,6 +4,135 @@ from robot_kinematics.core.robot_kinematics import RobotKinematics
 from robot_kinematics.core.types import Pose
 from ..constrants import get_reset_joint_cfg
 
+"""
+action: delta_position(3d) + delta_euler_angle(3d) + gripper_joint_angle(1d)
+action_range: [-1, 1]
+delta_position_scale: 0.025
+delta_euler_angle_scale: 0.025
+"""
+
+def compose_quat(base_q, delta_q, *, delta_in_local=True, normalize=True, eps=1e-12):
+    """
+    Compose a base orientation with a delta rotation.
+
+    Args:
+        base_q:  (..., 4) base quaternion [w,x,y,z]
+        delta_q: (..., 4) delta quaternion [w,x,y,z]
+        delta_in_local: if True, final = base ⊗ delta (delta in body/local frame).
+                        if False, final = delta ⊗ base (delta in world frame).
+        normalize: if True, renormalize result for numerical stability.
+        eps: small number to avoid division by zero.
+
+    Returns:
+        (..., 4) final quaternion [w,x,y,z]
+    """
+    base_q = np.asarray(base_q)
+    delta_q = np.asarray(delta_q)
+
+    if delta_in_local:
+        q = quaternion_multiply(base_q, delta_q)
+    else:
+        q = quaternion_multiply(delta_q, base_q)
+
+    if normalize:
+        norm = np.linalg.norm(q, axis=-1, keepdims=True)
+        q = q / np.clip(norm, eps, None)
+    return q
+
+# def quaternion_to_euler_angle(quaternions):
+#     """
+#     Convert a batch of quaternions to Euler angles.
+ 
+#     Args:
+#         quaternions (torch.Tensor): Tensor of shape (batch_size, 4) in (w, x, y, z) format.
+#     Returns:
+#         euler_angles (torch.Tensor): Tensor of shape (batch_size, 3), representing Euler angles (roll, pitch, yaw) in radians.
+#     """
+#     import torch
+#     # Extract components
+#     w, x, y, z = quaternions[:, 0], quaternions[:, 1], quaternions[:, 2], quaternions[:, 3]
+ 
+#     # Compute Euler angles
+#     # Roll (X-axis rotation)
+#     roll = torch.atan2(2 * (w * x + y * z), 1 - 2 * (x**2 + y**2))
+#     # Pitch (Y-axis rotation) - Clamp to avoid NaNs
+#     sinp = 2 * (w * y - z * x)
+#     pitch = torch.asin(sinp.clamp(-1.0, 1.0))
+#     # Yaw (Z-axis rotation)
+#     yaw = torch.atan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
+ 
+#     return torch.stack((roll, pitch, yaw), dim=-1)  # Shape (batch_size, 3)
+
+def euler_to_quaternion(roll, pitch, yaw):
+    """
+    Convert Euler angles (roll, pitch, yaw) to a quaternion (w, x, y, z).
+
+    Args:
+        roll (float): Rotation around the X-axis, in radians.
+        pitch (float): Rotation around the Y-axis, in radians.
+        yaw (float): Rotation around the Z-axis, in radians.
+
+    Returns:
+        np.ndarray: Quaternion [w, x, y, z].
+    """
+    cr = np.cos(roll / 2)
+    sr = np.sin(roll / 2)
+    cp = np.cos(pitch / 2)
+    sp = np.sin(pitch / 2)
+    cy = np.cos(yaw / 2)
+    sy = np.sin(yaw / 2)
+
+    # Compute quaternion (w, x, y, z)
+    w = cr * cp * cy + sr * sp * sy
+    x = sr * cp * cy - cr * sp * sy
+    y = cr * sp * cy + sr * cp * sy
+    z = cr * cp * sy - sr * sp * cy
+    return np.array([w, x, y, z])
+
+def quaternion_to_euler_angle(quaternion):
+    """
+    Convert a single quaternion (w, x, y, z) to Euler angles (roll, pitch, yaw) in radians.
+    
+    Args:
+        quaternion (array-like): Quaternion [w, x, y, z].
+    Returns:
+        np.ndarray: Euler angles [roll, pitch, yaw] in radians.
+    """
+    w, x, y, z = quaternion
+
+    # Roll (x-axis rotation)
+    roll = np.arctan2(2 * (w * x + y * z), 1 - 2 * (x**2 + y**2))
+
+    # Pitch (y-axis rotation)
+    sinp = 2 * (w * y - z * x)
+    sinp = np.clip(sinp, -1.0, 1.0)  # numerical stability
+    pitch = np.arcsin(sinp)
+
+    # Yaw (z-axis rotation)
+    yaw = np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
+
+    return np.array([roll, pitch, yaw])
+
+def quaternion_multiply(q1, q2):
+    """
+    Perform quaternion multiplication for a batch of quaternions for vector components.
+    Args:
+        q1: Array of shape (batch_size, 4) representing the first quaternion batch.
+        q2: Array of shape (batch_size, 4) representing the second quaternion batch.
+    Returns:
+        Array of shape (batch_size, 4) representing the resulting quaternion batch.
+    """
+    # Separate scalar (w) and vector (x, y, z) parts
+    w1, v1 = q1[..., 0], q1[..., 1:]
+    w2, v2 = q2[..., 0], q2[..., 1:]
+    # Compute the scalar (w) part
+    w_r = w1 * w2 - np.sum(v1 * v2, axis=-1)
+    # Compute the vector (x, y, z) part
+    v_r = np.expand_dims(w1, -1) * v2 + np.expand_dims(w2, -1) * v1 + np.cross(v1, v2, axis=-1)
+    # Combine scalar and vector parts
+    return np.concatenate((np.expand_dims(w_r, -1), v_r), axis=-1)
+
+
 # Option 1: Module-level singleton with lazy initialization
 _fk_kinematics_instance = None
 _ik_kinematics_instance = None
@@ -104,7 +233,7 @@ def _current_q_to_ee_pose(
     return ee_pose
 
 def apply_action_to_current_pose(
-    action: np.ndarray,
+    actions: np.ndarray,
     current_pose: np.ndarray,
 ) -> np.ndarray:
     """
@@ -113,10 +242,16 @@ def apply_action_to_current_pose(
     
     Return the new end-effector pose after applying the action.
     """
+    action = actions # only use the first step
+    action_delta_xyz = action[:3]
+    action_delta_quat = action[3:7]  # Assuming action contains quaternion delta
     
+    new_xyz = current_pose[:3] + action_delta_xyz
+    new_quat = compose_quat(current_pose[3:7], action_delta_quat)
+    new_pose = np.concatenate([new_xyz, new_quat], axis=0)
     
     # Placeholder implementation: simply return the action as the new pose
-    new_pose = current_pose
+    # new_pose = current_pose
     return new_pose
 
 def get_new_joint_targets_from_ee_pose(
@@ -158,7 +293,9 @@ def get_new_joint_targets_from_ee_pose(
     delta_q_dict = {joint: new_q_dict[joint] - current_q_active[joint] for joint in active_joints}
     # print delta q for debugging
     print("Delta q from IK:")
-    print(delta_q_dict)
+    # pretty print the delta q dict with degree
+    delta_q_dict_deg = {joint: np.degrees(delta_q_dict[joint]) for joint in delta_q_dict}
+    print(delta_q_dict_deg)
     
     joint_targets = new_q_dict
     
