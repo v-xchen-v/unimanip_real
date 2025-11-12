@@ -34,6 +34,7 @@ reset_joint_cfg = {
         # Head
         "idx11_head_joint1": 0.0,
         "idx12_head_joint2": 0.6,
+        # "idx12_head_joint2": 0.5,
         # Right arm
         "idx61_arm_r_joint1": 0.4,
         "idx62_arm_r_joint2": -1.4,

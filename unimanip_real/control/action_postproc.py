@@ -327,7 +327,7 @@ def get_new_joint_targets_from_ee_pose(
     joint_targets = new_q_dict
     
     # Placeholder implementation
-    joint_targets = {}  # e.g., {"joint1": 0.0, "joint2": 1.0, ...}
+    # joint_targets = {}  # e.g., {"joint1": 0.0, "joint2": 1.0, ...}
     return joint_targets
 
 def action_to_joint_targets(

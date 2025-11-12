@@ -90,13 +90,26 @@ class A2DRobotSDK(BaseRobotSDK):
         if self.sim_only:
             self._initialize_simulated_joints()
             
+        # initialize a urdf inspector for visualization if needed
+        from robot_kinematics.urdf.inspector import FullURDFInspector
+        # Use urdf inspector for simulation
+        #TODO: make urdf path in configuration
+        self.urdf_inspector = FullURDFInspector(
+            urdf_path="/home/xichen/Documents/repos/unimanip_real/assets/g1/G1_120s/urdf/G1_120s.urdf"
+        )
+            
     def _initialize_simulated_joints(self):
         """Initialize simulated joint positions with default values."""
         self.simulated_joints = {}
-        # Initialize all joints to zero
+        # # Initialize all joints to zero
+        # for joint_name in (self.arm_joint_names + self.head_joint_names + 
+        #                   self.waist_joint_names + self.gripper_joint_names):
+        #     self.simulated_joints[joint_name] = 0.0
+        # as reset pose
+        reset_cfg = get_reset_joint_cfg("open_laptop")
         for joint_name in (self.arm_joint_names + self.head_joint_names + 
                           self.waist_joint_names + self.gripper_joint_names):
-            self.simulated_joints[joint_name] = 0.0
+            self.simulated_joints[joint_name] = reset_cfg.get(joint_name, 0.0)
             
     def connect(self):
         """Connect to A2D robot."""
@@ -130,18 +143,49 @@ class A2DRobotSDK(BaseRobotSDK):
             self.is_connected = False
     def move_joints(self, joint_positions: Dict[str, float]) -> bool:
         """Move robot joints to specified positions or simulate movement."""
+        # get_reset_joint_cfg("open_laptop")
+        # curr_q = get_reset_joint_cfg("open_laptop")
+        # new_q = joint_positions
+        # self._animate_cur_and_new_q(curr_q, new_q)
         if self.sim_only:
             print(f"Simulating joint movement: {joint_positions}")
             # Update simulated joint positions
+            curr_q = self.simulated_joints.copy()
+            new_q = joint_positions
+            self._animate_cur_and_new_q(curr_q, new_q)
             self.simulated_joints.update(joint_positions)
+            # self.urdf_inspector.show_robot(self.simulated_joints)
+            
+
             return True
             
         else:
             # comment now to ensure real robot not moving when debugging other parts
-            # return self._move_joint_real(joint_positions)
+            return self._move_joint_real(joint_positions)
             pass
         
-    def _move_joint_real(self, joint_positions: Dict[str, float]) -> bool:
+
+    def _animate_cur_and_new_q(self, current_q: Dict[str, float], new_q: Dict[str, float]):
+        """
+        Visualize the joint movement trajectory using urdf inspector.
+        """
+        """cfg_trajectory={
+        ...     'shoulder_pan_joint' : [-np.pi / 4, np.pi / 4],
+        ...     'shoulder_lift_joint' : [0.0, -np.pi / 2.0],
+        ...     'elbow_joint' : [0.0, np.pi / 2.0]
+        ... })"""
+
+        # fill new q with current_q for missing joints
+        for name in self.arm_joint_names + self.head_joint_names + self.waist_joint_names + self.gripper_joint_names:
+            if name not in new_q:
+                new_q[name] = current_q[name]
+        # pair, current_q, and new_q dict to cfg_trajectory format to anim
+        cfg_trajectory = {
+            name: [current_q[name], new_q[name]] for name in self.arm_joint_names + self.head_joint_names + self.waist_joint_names + self.gripper_joint_names
+        }
+        self.urdf_inspector.animate_robot(cfg_trajectory)   
+    
+    def _move_joint_real(self, joint_positions: Dict[str, float], visualization:bool=True) -> bool:
         """Move real robot to target joinst:
             - right arm joints
             - right gripper joint
@@ -171,21 +215,35 @@ class A2DRobotSDK(BaseRobotSDK):
         new_gripper_q = {name: joint_positions[name] for name in ["idx81_gripper_r_outer_joint1"] if name in joint_positions}
         
         # Combine all joint positions
-        final_joint_positions = {**left_arm_q, **head_q, **waist_q, **new_right_arm_q, **new_gripper_q, **left_gripper_q}
+        new_q = {**left_arm_q, **head_q, **waist_q, **new_right_arm_q, **new_gripper_q, **left_gripper_q}
+        
+        if visualization:
+            # pretty print the curr_q new_q delta of them for each joint
+            for name in list(current_q.keys()):
+                print(f"{name}: {current_q[name]}->{new_q[name]}: delta:{np.rad2deg(np.abs(current_q[name]-new_q[name]))}")
+            self._animate_cur_and_new_q(current_q, new_q)
+
         try:
             # Implement actual robot joint movement here
-            print(f"Moving robot joints: {final_joint_positions}")
+            print(f"Moving robot joints: {new_q}")
             
-            self.robot_api.reset(
-                arm_positions=[final_joint_positions[name] for name in self.arm_joint_names],
-                gripper_positions=[
-                    final_joint_positions["idx41_gripper_l_outer_joint1"],
-                    final_joint_positions["idx81_gripper_r_outer_joint1"]
-                ],
-                hand_positions=None, # keep still
-                waist_positions=None, # keep still
-                head_positions=None, # keep still
+            self.robot_api.move_arm([new_q[name] for name in self.arm_joint_names])
+            self.robot_api.move_gripper(
+                [
+                    np.clip(new_q['idx41_gripper_l_outer_joint1'], 0, 1),
+                    np.clip(new_q['idx81_gripper_r_outer_joint1'], 0, 1)
+                ]
             )
+            # self.robot_api.reset(
+            #     arm_positions=[new_q[name] for name in self.arm_joint_names],
+            #     gripper_positions=[
+            #         new_q["idx41_gripper_l_outer_joint1"],
+            #         new_q["idx81_gripper_r_outer_joint1"]
+            #     ],
+            #     hand_positions=None, # keep still
+            #     waist_positions=list(waist_q.values()), # keep still
+            #     head_positions=None, # keep still
+            # )
             return True
         except Exception as e:
             print(f"Failed to move joints: {e}")
@@ -218,6 +276,8 @@ class A2DRobotSDK(BaseRobotSDK):
             
             # Get gripper states for end effector info
             gripper_states, _ = self.robot_api.gripper_states()
+            # /120, since it's value is from 35-120
+            gripper_states = (np.array(gripper_states)/120).tolist()
             
             
             robot_state = A2DRobotState(
@@ -238,11 +298,17 @@ class A2DRobotSDK(BaseRobotSDK):
             waist_joints_cfg = {
                 name: float(angle) for name, angle in zip(self.waist_joint_names, robot_state.waist_angles)
             }
+
+            right_gripper_joint_cfg = {
+                "idx81_gripper_r_outer_joint1": gripper_states[1],
+                "idx41_gripper_l_outer_joint1": gripper_states[0]
+            }
             
             joint_cfg = {
                 **arm_joints_cfg,
                 **head_joints_cfg,
-                **waist_joints_cfg
+                **waist_joints_cfg,
+                **right_gripper_joint_cfg
             }
             return joint_cfg
             
@@ -258,53 +324,60 @@ class A2DRobotSDK(BaseRobotSDK):
             print("Simulating robot reset")
             # Update simulated joints with reset configuration
             self.simulated_joints.update(reset_joint_cfg)
+            self.urdf_inspector.show_robot(self.simulated_joints)
             return True
+        else:
+            # comment now to ensure real robot not moving when debugging other parts
+            return self._reset_real_robot(reset_joint_cfg)
+            pass
             
-        # if self.robot_api is None:
-        #     print("Robot API not available, cannot reset")
-        #     return False
         
-        # try:
-        #     # Use current left arm joint to left arm fixed
-        #     current_q = self.get_current_joints()
-        #     current_left_arm_q = {
-        #         name: current_q[name] for name in self.left_arm_joint_names
-        #     }
+    def _reset_real_robot(self, reset_joint_cfg, visualize=True):
+        if self.robot_api is None:
+            print("Robot API not available, cannot reset")
+            return False
+        
+        try:
+            # Use current left arm joint to left arm fixed
+            current_q = self.get_current_joints()
+            current_left_arm_q = {
+                name: current_q[name] for name in self.left_arm_joint_names
+            }
             
-        #     # User right arm reset joints from reset_joint_cfg
-        #     right_arm_reset_q = {
-        #         name: reset_joint_cfg[name] for name in self.right_arm_joint_names
-        #     }
-        #     # combine left arm current q and right arm reset q
-        #     arm_positions = []
-        #     for name in self.left_arm_joint_names:
-        #         arm_positions.append(current_left_arm_q[name])
-        #     for name in self.right_arm_joint_names:
-        #         arm_positions.append(right_arm_reset_q[name])
+            # User right arm reset joints from reset_joint_cfg
+            right_arm_reset_q = {
+                name: reset_joint_cfg[name] for name in self.right_arm_joint_names
+            }
+            # combine left arm current q and right arm reset q
+            arm_positions = []
+            for name in self.left_arm_joint_names:
+                arm_positions.append(current_left_arm_q[name])
+            for name in self.right_arm_joint_names:
+                arm_positions.append(right_arm_reset_q[name])
                 
-        #     head_positions = [
-        #         reset_joint_cfg[name] for name in self.head_joint_names
-        #     ]
-        #     waist_positions = [
-        #         reset_joint_cfg[name] for name in self.waist_joint_names
-        #     ]
+            head_positions = [
+                reset_joint_cfg[name] for name in self.head_joint_names
+            ]
+            waist_positions = [
+                reset_joint_cfg[name] for name in self.waist_joint_names
+            ]
             
-        #     # gripper_positions = [
-        #     #     reset_joint_cfg[name] for name in self.gripper_joint_names
-        #     # ]
             
-        #     self.robot_api.reset(
-        #         arm_positions=arm_positions,
-        #         gripper_positions=[0.0, 1.0],  # Keep left grippers closed, right gripper open
-        #         hand_positions=None,
-        #         waist_positions=waist_positions,  
-        #         head_positions=head_positions  
-        #     )
-        #     return True
-        # except Exception as e:
-        #     print(f"Failed to reset robot: {e}")
-        #     return False
-        
+            # gripper_positions = [
+            #     reset_joint_cfg[name] for name in self.gripper_joint_names
+            # ]
+            
+            self.robot_api.reset(
+                arm_positions=arm_positions,
+                gripper_positions=[0.0, 1.0],  # Keep left grippers closed, right gripper open
+                hand_positions=None,
+                waist_positions=waist_positions,  
+                head_positions=head_positions  
+            )
+            return True
+        except Exception as e:
+            print(f"Failed to reset robot: {e}")
+            return False
     def get_raw_observation(self) -> RawObservation:
         """Get the current observation from the robot."""
         # return None
