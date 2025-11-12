@@ -238,6 +238,18 @@ def _current_q_to_ee_pose(
     # ee_pose = np.zeros(7)  # [x, y, z, qw, qx, qy, qz]
     return ee_pose
 
+def _mapping_gripper(gripper, lower_bound=0, upper_bound=1):
+    """
+    Map the gripper action value from [-1, 1] to [lower_bound, upper_bound].
+    """
+    def map_func(action_value: float) -> float:
+        # Clip action_value to [-1, 1]
+        action_value = np.clip(action_value, -1.0, 1.0)
+        # Map to [lower_bound, upper_bound]
+        mapped_value = ((action_value + 1) / 2) * (upper_bound - lower_bound) + lower_bound
+        return mapped_value
+    return map_func(gripper)
+
 def apply_action_to_current_pose(
     actions: np.ndarray,
     current_pose: np.ndarray,
@@ -263,10 +275,11 @@ def apply_action_to_current_pose(
     new_xyz = current_pose[:3] + (np.array(action_delta_xyz) * xyz_scale).tolist()
     new_quat = compose_quat(current_pose[3:7], action_delta_quat)
     new_pose = np.concatenate([new_xyz, new_quat], axis=0)
+    new_gripper = _mapping_gripper(action_gripper)
     
     # Placeholder implementation: simply return the action as the new pose
     # new_pose = current_pose
-    return new_pose, action_gripper
+    return new_pose, new_gripper
 
 def get_new_joint_targets_from_ee_pose(
     new_pose_arr: np.ndarray,
@@ -330,6 +343,10 @@ def action_to_joint_targets(
     pose_arr = _current_q_to_ee_pose(current_q, config)
     new_pose_arr, new_r_gripper_value = apply_action_to_current_pose(action, pose_arr)
     q_targets = get_new_joint_targets_from_ee_pose(new_pose_arr, current_q, config)
+    gripper_cfg = {
+        "idx81_gripper_r_outer_joint1": new_r_gripper_value,
+    }
+    q_targets.update(gripper_cfg)
     return q_targets
 
     # import numpy as np
