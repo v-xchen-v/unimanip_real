@@ -231,6 +231,12 @@ def _current_q_to_ee_pose(
     
     chain_joint_names = fk_kinematics.joint_names
     current_q_in_chain = {k: v for k, v in current_q.items() if k in chain_joint_names}
+    # get body joint from reset cfg
+    reset_q_cfg = get_reset_joint_cfg("open_laptop")
+    for joint_name in ["idx01_body_joint1", "idx02_body_joint2"]:
+        if joint_name not in current_q_in_chain:
+            current_q_in_chain[joint_name] = reset_q_cfg[joint_name]
+        
     current_pose = fk_kinematics.fk(current_q_in_chain)
     ee_pose = current_pose.as_flat_array()
     
@@ -324,6 +330,10 @@ def get_new_joint_targets_from_ee_pose(
     delta_q_dict_deg = {joint: np.degrees(delta_q_dict[joint]) for joint in delta_q_dict}
     print(delta_q_dict_deg)
     
+    # print ik delta 
+    delta_achieved2target = ik_result.info["achieved_pose"].xyz - target_pose.xyz
+    print(f"IK achieved - target xyz: {delta_achieved2target}")
+
     joint_targets = new_q_dict
     
     # Placeholder implementation

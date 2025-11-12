@@ -6,6 +6,7 @@ from .observation import build_model_input
 from .action_postproc import action_to_joint_targets
 from ..constrants import get_reset_joint_cfg
 from ..robot.base_robot import BaseRobotSDK
+from ..utils.logging_utils import ImageLogger
 
 class InferenceLoop:
     def __init__(
@@ -21,10 +22,13 @@ class InferenceLoop:
         # self.dt = float(config["control"].get("dt", 0.1))
         self.dt = 0.1
         # self.log_every = int(config["control"].get("log_every", 10))
-        self.log_every = 10
+        self.log_every = 1
         
         # Task-specific setup can be added here if needed
         self.task_reset_joint_cfg = get_reset_joint_cfg(task_name)
+        
+        # Initialize image logger
+        self.image_logger = ImageLogger()
 
     def step_once(self, step_idx: int) -> None:
         # 1) get observation from robot
@@ -51,6 +55,8 @@ class InferenceLoop:
 
         if step_idx % self.log_every == 0:
             print(f"[Loop] step {step_idx} done.")
+            # logging images here
+            self.image_logger.save_images(model_input, step_idx) 
 
     def run_interactive(self) -> None:
         """

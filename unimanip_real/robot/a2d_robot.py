@@ -241,7 +241,7 @@ class A2DRobotSDK(BaseRobotSDK):
                     new_q["idx81_gripper_r_outer_joint1"]
                 ],
                 hand_positions=None, # keep still
-                waist_positions=list(waist_q.values()), # keep still
+                waist_positions=[list(waist_q.values())[1], list(waist_q.values())[0]], # keep still
                 head_positions=None, # keep still
             )
             return True
@@ -285,7 +285,7 @@ class A2DRobotSDK(BaseRobotSDK):
                 head_angles=head_angles,
                 # end_position=end_position,
                 # end_orientation=end_orientation,
-                waist_angles=waist_angles,
+                waist_angles=[waist_angles[1], waist_angles[0]],  # height first, then pan
                 # timestamp=current_time
             )
             
@@ -371,7 +371,7 @@ class A2DRobotSDK(BaseRobotSDK):
                 arm_positions=arm_positions,
                 gripper_positions=[0.0, 1.0],  # Keep left grippers closed, right gripper open
                 hand_positions=None,
-                waist_positions=waist_positions,  
+                waist_positions=[waist_positions[1], waist_positions[0]],  
                 head_positions=head_positions  
             )
             return True

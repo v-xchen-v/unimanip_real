@@ -26,6 +26,52 @@ right_arm_joint_names = [
 ]
 arm_joint_names = left_arm_joint_names + right_arm_joint_names
 
+reset_joint_cfg = {
+    "open_laptop": {
+        # Body
+        "idx01_body_joint1": 0.0,
+        "idx02_body_joint2": 0.0,
+        # Head
+        "idx11_head_joint1": 0.0,
+        "idx12_head_joint2": 0.6,
+        # "idx12_head_joint2": 0.5,
+        # Right arm
+        "idx61_arm_r_joint1": 0.4,
+        "idx62_arm_r_joint2": -1.4,
+        "idx63_arm_r_joint3": -0.2,
+        "idx64_arm_r_joint4": 1.2,
+        "idx65_arm_r_joint5": -2.9,
+        "idx66_arm_r_joint6": 0.0,
+        "idx67_arm_r_joint7": 0.0,
+        # Right hand
+        # "idx71_gripper_r_inner_joint1": 0.0,
+        # "idx72_gripper_r_inner_joint3": 0.0,
+        # "idx73_gripper_r_inner_joint4": 0.0,
+        # "idx94_gripper_r_inner_joint0": 0.0,
+        "idx81_gripper_r_outer_joint1": 1.0,
+        # "idx82_gripper_r_outer_joint3": 0.0,
+        # "idx83_gripper_r_outer_joint4": 0.0,
+        # "idx93_gripper_r_outer_joint0": 0.0,
+        # Left arm
+        "idx21_arm_l_joint1": 0.0,
+        "idx22_arm_l_joint2": 1.4,
+        "idx23_arm_l_joint3": 0.0,
+        "idx24_arm_l_joint4": 0.0,
+        "idx25_arm_l_joint5": 0.0,
+        "idx26_arm_l_joint6": 0.0,
+        "idx27_arm_l_joint7": 0.0,
+        # # Left hand
+        # "idx31_gripper_l_inner_joint1": 0.0,
+        # "idx32_gripper_l_inner_joint3": 0.0,
+        # "idx33_gripper_l_inner_joint4": 0.0,
+        # "idx54_gripper_l_inner_joint0": 0.0,
+        "idx41_gripper_l_outer_joint1": 0.0,
+        # "idx42_gripper_l_outer_joint3": 0.0,
+        # "idx43_gripper_l_outer_joint4": 0.0,
+        # "idx53_gripper_l_outer_joint0": 0.0,
+    }
+}
+
 # reset_joint_cfg = {
 #     "open_laptop": {
 #         # Body
@@ -36,13 +82,13 @@ arm_joint_names = left_arm_joint_names + right_arm_joint_names
 #         "idx12_head_joint2": 0.6,
 #         # "idx12_head_joint2": 0.5,
 #         # Right arm
-#         "idx61_arm_r_joint1": 0.6,
-#         "idx62_arm_r_joint2": -1.4,
-#         "idx63_arm_r_joint3": -0.2,
-#         "idx64_arm_r_joint4": 1.2,
+#         "idx61_arm_r_joint1": 0.44,
+#         "idx62_arm_r_joint2": -1.48,
+#         "idx63_arm_r_joint3": -0.12,
+#         "idx64_arm_r_joint4": 1.46,
 #         "idx65_arm_r_joint5": -2.9,
-#         "idx66_arm_r_joint6": 0.0,
-#         "idx67_arm_r_joint7": 0.0,
+#         "idx66_arm_r_joint6": -0.17,
+#         "idx67_arm_r_joint7": -0.29,
 #         # Right hand
 #         # "idx71_gripper_r_inner_joint1": 0.0,
 #         # "idx72_gripper_r_inner_joint3": 0.0,
@@ -72,48 +118,51 @@ arm_joint_names = left_arm_joint_names + right_arm_joint_names
 #     }
 # }
 
-reset_joint_cfg = {
-    "open_laptop": {
-        # Body
-        "idx01_body_joint1": 0.2,
-        "idx02_body_joint2": 0.0,
-        # Head
-        "idx11_head_joint1": 0.0,
-        "idx12_head_joint2": 0.6,
-        # "idx12_head_joint2": 0.5,
-        # Right arm
-        "idx61_arm_r_joint1": 0.44,
-        "idx62_arm_r_joint2": -1.48,
-        "idx63_arm_r_joint3": -0.12,
-        "idx64_arm_r_joint4": 1.46,
-        "idx65_arm_r_joint5": -2.9,
-        "idx66_arm_r_joint6": -0.17,
-        "idx67_arm_r_joint7": -0.29,
-        # Right hand
-        # "idx71_gripper_r_inner_joint1": 0.0,
-        # "idx72_gripper_r_inner_joint3": 0.0,
-        # "idx73_gripper_r_inner_joint4": 0.0,
-        # "idx94_gripper_r_inner_joint0": 0.0,
-        "idx81_gripper_r_outer_joint1": 1.0,
-        # "idx82_gripper_r_outer_joint3": 0.0,
-        # "idx83_gripper_r_outer_joint4": 0.0,
-        # "idx93_gripper_r_outer_joint0": 0.0,
-        # Left arm
-        "idx21_arm_l_joint1": 0.0,
-        "idx22_arm_l_joint2": 1.4,
-        "idx23_arm_l_joint3": 0.0,
-        "idx24_arm_l_joint4": 0.0,
-        "idx25_arm_l_joint5": 0.0,
-        "idx26_arm_l_joint6": 0.0,
-        "idx27_arm_l_joint7": 0.0,
-        # # Left hand
-        # "idx31_gripper_l_inner_joint1": 0.0,
-        # "idx32_gripper_l_inner_joint3": 0.0,
-        # "idx33_gripper_l_inner_joint4": 0.0,
-        # "idx54_gripper_l_inner_joint0": 0.0,
-        "idx41_gripper_l_outer_joint1": 0.0,
-        # "idx42_gripper_l_outer_joint3": 0.0,
-        # "idx43_gripper_l_outer_joint4": 0.0,
-        # "idx53_gripper_l_outer_joint0": 0.0,
-    }
-}
+# reset_joint_cfg = {
+#     "open_laptop": {
+#         # Body
+#         # "idx01_body_joint1": 0.2,
+#         # "idx02_body_joint2": 0.0,
+#         "idx01_body_joint1": 0.0, # lift
+#         "idx02_body_joint2": 0.2, # rad
+#         # "idx02_body_joint2": 0.00, # rad
+#         # Head
+#         "idx11_head_joint1": 0.0,
+#         "idx12_head_joint2": 0.6,
+#         # "idx12_head_joint2": 0.5,
+#         # Right arm
+#         "idx61_arm_r_joint1": 0.44,
+#         "idx62_arm_r_joint2": -1.48,
+#         "idx63_arm_r_joint3": -0.12,
+#         "idx64_arm_r_joint4": 1.46,
+#         "idx65_arm_r_joint5": -2.9,
+#         "idx66_arm_r_joint6": -0.17,
+#         "idx67_arm_r_joint7": -0.29,
+#         # Right hand
+#         # "idx71_gripper_r_inner_joint1": 0.0,
+#         # "idx72_gripper_r_inner_joint3": 0.0,
+#         # "idx73_gripper_r_inner_joint4": 0.0,
+#         # "idx94_gripper_r_inner_joint0": 0.0,
+#         "idx81_gripper_r_outer_joint1": 1.0,
+#         # "idx82_gripper_r_outer_joint3": 0.0,
+#         # "idx83_gripper_r_outer_joint4": 0.0,
+#         # "idx93_gripper_r_outer_joint0": 0.0,
+#         # Left arm
+#         "idx21_arm_l_joint1": 0.0,
+#         "idx22_arm_l_joint2": 1.4,
+#         "idx23_arm_l_joint3": 0.0,
+#         "idx24_arm_l_joint4": 0.0,
+#         "idx25_arm_l_joint5": 0.0,
+#         "idx26_arm_l_joint6": 0.0,
+#         "idx27_arm_l_joint7": 0.0,
+#         # # Left hand
+#         # "idx31_gripper_l_inner_joint1": 0.0,
+#         # "idx32_gripper_l_inner_joint3": 0.0,
+#         # "idx33_gripper_l_inner_joint4": 0.0,
+#         # "idx54_gripper_l_inner_joint0": 0.0,
+#         "idx41_gripper_l_outer_joint1": 0.0,
+#         # "idx42_gripper_l_outer_joint3": 0.0,
+#         # "idx43_gripper_l_outer_joint4": 0.0,
+#         # "idx53_gripper_l_outer_joint0": 0.0,
+#     }
+# }
