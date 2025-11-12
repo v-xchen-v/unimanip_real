@@ -33,3 +33,8 @@ class BaseRobotSDK(ABC):
     def move_joints(self, joint_cfg: Dict[str, float]) -> None:
         """Move the robot joints to the specified positions."""
         pass
+    
+    @abstractmethod
+    def get_current_joints(self) -> Dict[str, float]:
+        """Get the current joint positions of the robot."""
+        pass

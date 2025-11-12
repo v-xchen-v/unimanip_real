@@ -163,6 +163,8 @@ class FakeRobotSDK(BaseRobotSDK):
         depth += 0.1 * np.random.randn(self.image_height, self.image_width)
         depth = np.clip(depth, 0.1, 5.0)  # Reasonable depth range
         
+        # Duplicate depth 1 channel to make it 3-channel if needed
+        depth = np.stack([depth]*3, axis=-1)
         return depth
 
     # ------------ observation ------------
@@ -211,7 +213,7 @@ class FakeRobotSDK(BaseRobotSDK):
             right_arm_depth = self._generate_synthetic_depth()
         else:
             # Right wrist depth cannot be grabbed -> use all zeros
-            right_arm_depth = np.zeros((self.image_height, self.image_width), dtype=np.float32)
+            right_arm_depth = np.zeros((self.image_height, self.image_width, 3), dtype=np.float32)
 
         return RawObservation(
             head_top_rgb=rgb.copy(),
@@ -284,7 +286,7 @@ class FakeRobotSDK(BaseRobotSDK):
         """Check if robot is currently executing a movement."""
         return self.move_start_time is not None
 
-    def get_current_joint_angles(self) -> np.ndarray:
+    def get_current_joints(self) -> np.ndarray:
         """Get current joint angles."""
         self._update_joint_simulation()
         return self.current_joint_angles.copy()

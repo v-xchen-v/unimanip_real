@@ -116,3 +116,21 @@ class ExampleRobotSDK(BaseRobotSDK):
         print("[ExampleRobotSDK] Joints moved successfully.")
     
     
+    def get_current_joints(self):
+        print("[ExampleRobotSDK] Getting current joint positions...")
+        # Simulate retrieval delay
+        import time
+        time.sleep(0.5)
+        
+        # For simulation, return zeros
+        
+        current_joints = self._simulate_current_joints()
+        
+        print("[ExampleRobotSDK] Current joint positions:", current_joints)
+        return current_joints
+    
+    def _simulate_current_joints(self) -> Dict[str, float]:
+        # Simulate current joint positions
+        from ..constrants import get_reset_joint_cfg
+        joint_cfg = get_reset_joint_cfg("open_laptop")
+        return joint_cfg

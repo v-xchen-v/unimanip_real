@@ -34,10 +34,13 @@ class InferenceLoop:
         # 3) call model
         action = self.model_client.predict(model_input)
 
+        # 4) get current joint positions
+        current_q = self.robot_api.get_current_joints()
+        
         # 4) convert to joint targets
         q_target = action_to_joint_targets(
             action=action,
-            current_q={},
+            current_q=current_q,
             config=self.config,
         )
 
