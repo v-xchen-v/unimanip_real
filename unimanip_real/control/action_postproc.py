@@ -1,3 +1,8 @@
+KIN_DIR = "/home/xichen/Documents/repos/unimanip_real/robot-kinematics-xc"
+import sys
+if KIN_DIR not in sys.path:
+    sys.path.append(KIN_DIR)
+
 from typing import Dict, Any, Optional
 import numpy as np
 from robot_kinematics.core.robot_kinematics import RobotKinematics
@@ -244,15 +249,23 @@ def apply_action_to_current_pose(
     """
     action = actions # only use the first step
     action_delta_xyz = action[:3]
-    action_delta_quat = action[3:7]  # Assuming action contains quaternion delta
+    action_delta_euler = action[3:6]  # Assuming action contains quaternion delta
+    action_delta_quat = euler_to_quaternion(
+        roll=action_delta_euler[0],
+        pitch=action_delta_euler[1],
+        yaw=action_delta_euler[2],
+    )
+    action_gripper = action[6]
     
-    new_xyz = current_pose[:3] + action_delta_xyz
+    xyz_scale = 0.025
+    euler_scale = 0.025
+    new_xyz = current_pose[:3] + action_delta_xyz * xyz_scale
     new_quat = compose_quat(current_pose[3:7], action_delta_quat)
     new_pose = np.concatenate([new_xyz, new_quat], axis=0)
     
     # Placeholder implementation: simply return the action as the new pose
     # new_pose = current_pose
-    return new_pose
+    return new_pose, action_gripper
 
 def get_new_joint_targets_from_ee_pose(
     new_pose_arr: np.ndarray,
@@ -314,7 +327,7 @@ def action_to_joint_targets(
     It concatenates the body joints (kept at current positions) with the right arm joints from action.
     """
     pose_arr = _current_q_to_ee_pose(current_q, config)
-    new_pose_arr = apply_action_to_current_pose(action, pose_arr)
+    new_pose_arr, new_r_gripper_value = apply_action_to_current_pose(action, pose_arr)
     q_targets = get_new_joint_targets_from_ee_pose(new_pose_arr, current_q, config)
     return q_targets
 

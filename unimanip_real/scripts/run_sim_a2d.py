@@ -12,7 +12,7 @@ import sys
 sys.path.append(str(PROJECT_ROOT))
 
 from unimanip_real.configs.config_loader import load_config
-from unimanip_real.robot.fake_robot import FakeRobotSDK
+from unimanip_real.robot.a2d_robot import A2DRobotSDK
 from unimanip_real.control.loop import InferenceLoop
 
 def fake_model_client():
@@ -21,25 +21,27 @@ def fake_model_client():
             # a fake action pose [x, y, z, rw, rx, ry, rz]
             import numpy as np
             from scipy.spatial.transform import Rotation as R
-            quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat(scalar_first=True)
-            # xyz = [0.05, 0.05, 0.05]
-            xyz = [0.0, 0.0, 0.0]
-            action_delta_pose = xyz + quat_wxyz.tolist()
+            # quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat(scalar_first=True)
+            euler_angles = [0, 0, 0]
+            xyz = [0.05, 0.05, 0.05]
+            gripper = [0.5]
+            action_delta_pose = xyz + euler_angles.tolist() + gripper.tolist()
 
             # Return zero action for testing
             return {
                 # "joint_deltas": [0.0] * len(model_input["joint_angles"])
-                "action": action_delta_pose
+                "actions": action_delta_pose
             }
     return FakeModelClient()
 
 def main():
     # Load configuration
-    config_path = Path(__file__).parent.parent / "configs" / "fake_robot_config.yaml"
-    robot_cfg = load_config(config_path)
+    # config_path = Path(__file__).parent.parent / "configs" / "fake_robot_config.yaml"
+    # robot_cfg = load_config(config_path)
+    robot_cfg = {}
 
     # Initialize fake robot
-    robot_api = FakeRobotSDK(robot_cfg)
+    robot_api = A2DRobotSDK(robot_cfg, sim_only=True)
 
     # fake model client
     model_client = fake_model_client()
