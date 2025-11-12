@@ -1,6 +1,8 @@
 from typing import Dict, Any
 from ..core.types import RawObservation
 from .rawobs_preproc import resize_images, convert_images_to_pil
+from .rawobs_preproc import normalize_depth, duplicate_depth_channel
+
 
 def build_model_input(obs: RawObservation, save_log=True) -> Dict[str, Any]:
     # in obs, find head_top_rgb, head_depth, right_wrist_rgb, right_wrist_depth if have,
@@ -18,10 +20,24 @@ def build_model_input(obs: RawObservation, save_log=True) -> Dict[str, Any]:
         if img is not None:
             images.append(img)
     
+    # normalize depth image of head_top_depth
+    for idx, view_name in enumerate(required_view_names):
+        if "depth" in view_name:
+            images[idx] = normalize_depth(images[idx])
+            
+    # duplicate depth channel if single channel
+    for idx, view_name in enumerate(required_view_names):
+        if "depth" in view_name:
+            images[idx] = duplicate_depth_channel(images[idx])
+    
     # preprocess of images, resize images, then convert to pil
     resized_images = resize_images(images)
     pil_images = convert_images_to_pil(resized_images)
     
+    # Check the all image are shape as (520, 520, 3)
+    for idx, img in enumerate(pil_images):
+        if img.size != (520, 520):
+            raise ValueError(f"Image at index {idx} has size {img.size}, expected (520, 520)")
     
     model_input = {
         "images": pil_images,

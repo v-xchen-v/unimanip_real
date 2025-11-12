@@ -16,6 +16,7 @@ delta_position_scale: 0.025
 delta_euler_angle_scale: 0.025
 """
 
+
 def compose_quat(base_q, delta_q, *, delta_in_local=True, normalize=True, eps=1e-12):
     """
     Compose a base orientation with a delta rotation.
@@ -259,7 +260,7 @@ def apply_action_to_current_pose(
     
     xyz_scale = 0.025
     euler_scale = 0.025
-    new_xyz = current_pose[:3] + action_delta_xyz * xyz_scale
+    new_xyz = current_pose[:3] + (np.array(action_delta_xyz) * xyz_scale).tolist()
     new_quat = compose_quat(current_pose[3:7], action_delta_quat)
     new_pose = np.concatenate([new_xyz, new_quat], axis=0)
     

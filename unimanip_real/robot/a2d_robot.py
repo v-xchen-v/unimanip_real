@@ -295,11 +295,9 @@ class A2DRobotSDK(BaseRobotSDK):
         # # For simulation, return a dummy depth image (e.g., all zeros)
         # return np.zeros((1280, 720, 1), dtype=np.float32)
         raw_head_top_depth, _ = self.robot_camera_api.get_latest_image("head_depth")
-        # duplicate 1 channel to 3 channels
-        raw_head_top_depth = np.repeat(raw_head_top_depth, 3, axis=2)
         return raw_head_top_depth
 
     def _get_right_wrist_depth_image(self) -> np.ndarray:
         """Simulate getting a depth image from the right wrist camera."""
         # No depth image of right wrist, return a dummy depth image (e.g., all zeros) instead
-        return np.zeros((480, 848, 3), dtype=np.float32)
+        return np.zeros((480, 848, 1), dtype=np.float32)

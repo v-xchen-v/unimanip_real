@@ -46,3 +46,44 @@ def convert_images_to_pil(
         pil_images.append(pil_image)
 
     return pil_images
+
+
+def normalize_depth(depth_uint16, depth_scale=0.001, max_depth=5.0):
+    """
+    Convert uint16 depth to 0–255 grayscale image.
+    
+    Args:
+        depth_uint16 (np.ndarray): Depth image (uint16).
+        depth_scale (float): Scale factor to convert raw depth to meters (e.g., 0.001 for RealSense).
+        max_depth (float): Maximum depth in meters to clip at.
+    Returns:
+        np.ndarray: Normalized uint8 depth image (0–255).
+    """
+    # Convert to meters
+    depth_m = depth_uint16.astype(np.float32) * depth_scale
+
+    # Clip range (0, max_depth)
+    depth_m = np.clip(depth_m, 0, max_depth)
+
+    # Normalize to 0–255 (invert so near = bright if desired)
+    depth_norm = (depth_m / max_depth) * 255.0
+    depth_norm = depth_norm.astype(np.uint8)
+
+    return depth_norm
+
+def duplicate_depth_channel(depth_image):
+    """
+    Duplicate single-channel depth image to 3 channels.
+    
+    Args:
+        depth_image (np.ndarray): Single-channel depth image (H, W).
+    Returns:
+        np.ndarray: 3-channel depth image (H, W, 3).
+    """
+    if len(depth_image.shape) == 2:
+        depth_3ch = np.stack([depth_image]*3, axis=-1)
+    elif len(depth_image.shape) == 3 and depth_image.shape[2] == 1:
+        depth_3ch = np.concatenate([depth_image]*3, axis=-1)
+    else:
+        raise ValueError("Input depth_image must be single-channel.")
+    return depth_3ch

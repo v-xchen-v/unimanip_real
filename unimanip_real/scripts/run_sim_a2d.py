@@ -25,12 +25,12 @@ def fake_model_client():
             euler_angles = [0, 0, 0]
             xyz = [0.05, 0.05, 0.05]
             gripper = [0.5]
-            action_delta_pose = xyz + euler_angles.tolist() + gripper.tolist()
+            action_delta_pose = xyz + euler_angles+ gripper
 
             # Return zero action for testing
             return {
                 # "joint_deltas": [0.0] * len(model_input["joint_angles"])
-                "actions": action_delta_pose
+                "action": action_delta_pose
             }
     return FakeModelClient()
 
