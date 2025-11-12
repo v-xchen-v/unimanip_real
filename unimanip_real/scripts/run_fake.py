@@ -14,24 +14,7 @@ sys.path.append(str(PROJECT_ROOT))
 from unimanip_real.configs.config_loader import load_config
 from unimanip_real.robot.fake_robot import FakeRobotSDK
 from unimanip_real.control.loop import InferenceLoop
-
-def fake_model_client():
-    class FakeModelClient:
-        def predict(self, model_input):
-            # a fake action pose [x, y, z, rw, rx, ry, rz]
-            import numpy as np
-            from scipy.spatial.transform import Rotation as R
-            quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat(scalar_first=True)
-            # xyz = [0.05, 0.05, 0.05]
-            xyz = [0.0, 0.0, 0.0]
-            action_delta_pose = xyz + quat_wxyz.tolist()
-
-            # Return zero action for testing
-            return {
-                # "joint_deltas": [0.0] * len(model_input["joint_angles"])
-                "action": action_delta_pose
-            }
-    return FakeModelClient()
+from unimanip_real.model.vla_client import fake_model_client
 
 def main():
     # Load configuration

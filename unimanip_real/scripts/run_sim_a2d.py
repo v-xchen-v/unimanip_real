@@ -15,24 +15,9 @@ from unimanip_real.configs.config_loader import load_config
 from unimanip_real.robot.a2d_robot import A2DRobotSDK
 from unimanip_real.control.loop import InferenceLoop
 
-def fake_model_client():
-    class FakeModelClient:
-        def predict(self, model_input):
-            # a fake action pose [x, y, z, rw, rx, ry, rz]
-            import numpy as np
-            from scipy.spatial.transform import Rotation as R
-            # quat_wxyz = R.from_euler('xyz', [0, 0, 0]).as_quat(scalar_first=True)
-            euler_angles = [0, 0, 0]
-            xyz = [0.05, 0.05, 0.05]
-            gripper = [0.5]
-            action_delta_pose = xyz + euler_angles+ gripper
-
-            # Return zero action for testing
-            return {
-                # "joint_deltas": [0.0] * len(model_input["joint_angles"])
-                "action": action_delta_pose
-            }
-    return FakeModelClient()
+from unimanip_real.model.vla_client import fake_model_client
+from unimanip_real.model.vla_client import VlaModelClient
+    
 
 def main():
     # Load configuration
@@ -44,7 +29,8 @@ def main():
     robot_api = A2DRobotSDK(robot_cfg, sim_only=True)
 
     # fake model client
-    model_client = fake_model_client()
+    # model_client = fake_model_client() # for debugging
+    model_client = VlaModelClient()
     
     # Initialize control loop
     control_loop = InferenceLoop(

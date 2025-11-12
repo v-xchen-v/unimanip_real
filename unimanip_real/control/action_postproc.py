@@ -260,7 +260,7 @@ def apply_action_to_current_pose(
     
     Return the new end-effector pose after applying the action.
     """
-    action = actions # only use the first step
+    action = actions[0] # only use the first step
     action_delta_xyz = action[:3]
     action_delta_euler = action[3:6]  # Assuming action contains quaternion delta
     action_delta_quat = euler_to_quaternion(
