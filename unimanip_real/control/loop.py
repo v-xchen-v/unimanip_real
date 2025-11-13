@@ -75,6 +75,10 @@ class InferenceLoop:
                 if cmd == "r":
                     print("[Loop] Resetting robot...")
                     self.robot_api.reset(reset_joint_cfg=self.task_reset_joint_cfg)
+                    # Reset image logger and step index
+                    self.image_logger.reset()
+                    step_idx = 0
+                    print("[Loop] Step index reset to 0")
                 elif cmd == "n":
                     print("[Loop] Running one step...")
                     self.step_once(step_idx)

@@ -28,6 +28,20 @@ class ImageLogger:
         os.makedirs(log_dir, exist_ok=True)
         return log_dir
     
+    def reset(self) -> None:
+        """Reset the logger with a new log directory.
+        
+        First session: debug_logs/run_20251113_090000/
+        ├── head_top_0.png, head_top_1.png, head_top_2.png...
+
+        [Press 'r' to reset]
+
+        Second session: debug_logs/run_20251113_090245/
+        ├── head_top_0.png, head_top_1.png, head_top_2.png...  # Fresh start!
+        """
+        self.log_dir = self._create_log_directory()
+        print(f"[ImageLogger] Reset - new logging directory: {self.log_dir}")
+    
     def save_images(self, model_input: Dict[str, Any], step_idx: int) -> None:
         """Save images from model_input to log directory."""
         if "images" not in model_input or len(model_input["images"]) < 4:
