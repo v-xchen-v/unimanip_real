@@ -134,3 +134,6 @@ class ExampleRobotSDK(BaseRobotSDK):
         from ..constrants import get_reset_joint_cfg
         joint_cfg = get_reset_joint_cfg("open_laptop")
         return joint_cfg
+    
+    def move_wheel(self, distance_cm, speed_cm_s):
+        return super().move_wheel(distance_cm, speed_cm_s)

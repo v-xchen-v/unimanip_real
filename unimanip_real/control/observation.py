@@ -42,6 +42,7 @@ def build_model_input(obs: RawObservation, save_log=True) -> Dict[str, Any]:
     model_input = {
         "images": pil_images,
         "task_description": "open laptop",
+        # "task_description": "pick up the bottle on table",
         "state": np.zeros((6, ), dtype=np.float32).tolist(),  # dummy state
     }
     # if obs.head_top_depth is not None:

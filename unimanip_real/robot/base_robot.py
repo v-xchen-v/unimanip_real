@@ -39,3 +39,8 @@ class BaseRobotSDK(ABC):
     def get_current_joints(self) -> Dict[str, float]:
         """Get the current joint positions of the robot."""
         pass
+    
+    @abstractmethod
+    def move_wheel(self, distance_cm: float, speed_cm_s: float) -> bool:
+        """Move the robot base wheels by a certain distance at a specified speed."""
+        pass

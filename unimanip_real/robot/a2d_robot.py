@@ -415,3 +415,47 @@ class A2DRobotSDK(BaseRobotSDK):
         """Simulate getting a depth image from the right wrist camera."""
         # No depth image of right wrist, return a dummy depth image (e.g., all zeros) instead
         return np.zeros((480, 848, 1), dtype=np.float32)
+
+    def move_wheel(self, distance_cm: float, speed_cm_s: float) -> bool:
+        """
+        distance_cm: positive for forward, negative for backward
+        speed_cm_s: speed in cm/s
+        """
+        distance_m = distance_cm / 100.0
+        speed_m_s = speed_cm_s / 100.0
+
+        direction = 1 if distance_m >= 0 else -1
+
+        if self.sim_only:
+            print(f"Simulating wheel movement: distance {distance_cm} cm at speed {speed_cm_s} cm/s")
+            time_needed = abs(distance_m) / speed_m_s if speed_m_s > 0 else 0
+            time.sleep(time_needed)
+            return True
+        
+        if self.robot_api is None:
+            print("Robot API not available, cannot move wheel")
+            return False
+        
+        try:
+            print(f"Moving wheel: distance {distance_cm} cm at speed {speed_cm_s} cm/s")
+            v = direction * abs(speed_m_s)
+            t = abs(distance_m) / abs(speed_m_s) if speed_m_s > 0 else 0
+            print(f"Linear velocity: {v} m/s for time: {t} s")
+            # warning if linear velocity is too slow, less than 0.1 m/s it may not move
+            if abs(v) < 0.1:
+                print("Warning: linear velocity is too low, may not move the robot")    
+            # raise error is linear velocity is too high, more than 1.0 m/s
+            if abs(v) > 1.0:
+                print("Error: linear velocity is too high, aborting move")
+                return False
+            
+            self.robot_api.move_wheel(v, 0.0) # linear velocity, angular velocity
+            time.sleep(t)
+            self.robot_api.move_wheel(0.0, 0.0) # stop
+            return True
+        except Exception as e:
+            print(f"Failed to move wheel: {e}")
+            return False
+            
+        
+        

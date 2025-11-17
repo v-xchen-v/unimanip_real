@@ -300,3 +300,6 @@ class FakeRobotSDK(BaseRobotSDK):
                 return False
             time.sleep(0.01)  # Small sleep to avoid busy waiting
         return True
+
+    def move_wheel(self, distance_cm, speed_cm_s):
+        return super().move_wheel(distance_cm, speed_cm_s)
