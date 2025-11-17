@@ -64,14 +64,16 @@ class InferenceLoop:
           r: reset robot using init joints
           n: run one step
           m: enter auto mode (continuous steps until Ctrl+C)
+          f: move wheel forward 5 cm in 5 s
+          b: move wheel backward 5 cm in 5 s
           q: quit
         """
         self.robot_api.connect()
         try:
-            print("Commands: [r]=reset, [n]=next step, [m]=auto run, [q]=quit")
+            print("Commands: [r]=reset, [n]=next step, [m]=auto run, [f]=forward 5cm, [b]=backward 5cm, [q]=quit")
             step_idx = 0
             while True:
-                cmd = input("Command (r/n/m/q): ").strip().lower()
+                cmd = input("Command (r/n/m/f/b/q): ").strip().lower()
                 if cmd == "r":
                     print("[Loop] Resetting robot...")
                     self.robot_api.reset(reset_joint_cfg=self.task_reset_joint_cfg)
@@ -93,10 +95,24 @@ class InferenceLoop:
                         # break by Ctrl+C
                     except KeyboardInterrupt:
                         print("\n[Loop] Auto mode interrupted, back to manual.")
+                elif cmd == "f":
+                    print("[Loop] Moving wheel forward 5 cm in 5 seconds...")
+                    success = self.robot_api.move_wheel(distance_cm=5.0, speed_cm_s=20.0)
+                    if success:
+                        print("[Loop] Forward movement completed.")
+                    else:
+                        print("[Loop] Failed to move forward.")
+                elif cmd == "b":
+                    print("[Loop] Moving wheel backward 5 cm in 5 seconds...")
+                    success = self.robot_api.move_wheel(distance_cm=-10.0, speed_cm_s=20.0)
+                    if success:
+                        print("[Loop] Backward movement completed.")
+                    else:
+                        print("[Loop] Failed to move backward.")
                 elif cmd == "q":
                     print("[Loop] Quitting.")
                     break
                 else:
-                    print("[Loop] Unknown command, use r/n/m/q.")
+                    print("[Loop] Unknown command, use r/n/m/f/b/q.")
         finally:
             self.robot_api.disconnect()

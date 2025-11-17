@@ -88,7 +88,7 @@ def _center_crop(img: np.ndarray, crop_size: Tuple[int, int]) -> np.ndarray:
     """Center crop image to (crop_h, crop_w)."""
     h, w = img.shape[:2]
     ch, cw = crop_size
-    start_h = max(0, (h - ch) // 3)
+    start_h = max(0, (h - ch) // 4)
     start_w = max(0, (w - cw) // 2)
     return img[start_h:start_h + ch, start_w:start_w + cw]
 
